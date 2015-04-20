@@ -7,7 +7,7 @@
     <link rel="import" href="cg-input-documents.html">
     <style>
         .demo {
-            margin-boottom:60px;
+            margin-bottom:60px;
             min-height: 300px;
         }
         .demo-item {
@@ -33,7 +33,7 @@
 <body unresolved fullbleed layout vertical center center-justified>
 
 <template id="sandbox" is="auto-binding">
-    <cg-input-documents required documents="{{documents}}"></cg-input-documents>
+    <cg-input-documents required documents="{{documents}}" scrolling="false"></cg-input-documents>
     <!--<section layout vertical left>-->
         <!--<h2>input select form demo required selected {{selected}}</h2>-->
         <!--<section>-->
@@ -75,14 +75,16 @@
 <script>
     window.addEventListener('template-bound', function(){
         var sandbox = document.getElementById('sandbox');
-        sandbox.documents = [{
+        sandbox.documdents = [{
             "name": "c29bf435b98b.jpg",
             "size": 359551,
-            "type": "image/jpeg"
+            "type": "image/jpeg",
+            "description":"Sed id lacus vitae tortor convallis rhoncus a non ipsum."
         }, {
             "name": "docs.zip",
             "size": 1607693765,
-            "type": "application/zip"
+            "type": "application/zip",
+            "description":"Sed tempus magna et ligula imperdiet gravida. Proin semper augue justo, sit amet dictum erat porttitor vitae."
         }, {
             "name": "eclipse-java-luna-SR1-linux-gtk-x86_64.tar.gz",
             "size": 160242552,
@@ -94,15 +96,18 @@
         }, {
             "name": "salamander",
             "size": 63,
-            "type": ""
+            "type": "",
+            "description":"Proin semper augue justo, sit amet dictum erat porttitor vitae."
         }, {
             "name": "singlepath.svg",
             "size": 47770,
-            "type": "image/svg+xml"
+            "type": "image/svg+xml",
+            "description":"Sed id lacus vitae tortor convallis rhoncus a non ipsum."
         }, {
             "name": "stock-vector-natural-grass-and-ground-seamless-borders-set-of-vector-cartoon-illustrations-of-grass-field-71024461.jpg",
             "size": 71119,
-            "type": "image/jpeg"
+            "type": "image/jpeg",
+            "description":"Sed tempus magna et ligula imperdiet gravida."
         }];
         sandbox.selected = '#ffff00';
         sandbox.selected2 = null;

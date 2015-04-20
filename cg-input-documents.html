@@ -1,24 +1,28 @@
 <link href="../polymer/polymer.html" rel="import">
 <link href="../paper-shadow/paper-shadow.html" rel="import">
 <link href="../paper-button/paper-button.html" rel="import">
+<link href="../paper-input/paper-input.html" rel="import">
+<link href="../paper-toast/paper-toast.html" rel="import">
 <link href="../core-icon/core-icon.html" rel="import">
 <link href="../core-icon-button/core-icon-button.html" rel="import">
 <link href="../core-list/core-list.html" rel="import">
 <link href="../cg-lightdom-element/cg-lightdom-element.html" rel="import">
 <link href="../font-awesome-polymer-icons/fa-icons.html" rel="import" >
 
-<polymer-element name="cg-input-documents" extends="cg-lightdom-element" attributes="label documents colors selected required">
+<link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
+<script src="../dropzone/dist/dropzone.js"></script>
+
+<polymer-element name="cg-input-documents"  attributes="label documents scrolling">
     <template>
         <style>
             cg-input-documents {
                 width:100%;
                 font-family: sans-serif;
+                height:250px;
             }
-            #dragzone {
-                border:1px solid black;
-            }
-            core-list {
+            #listScroller {
                 height:200px;
+                overflow:auto;
             }
             .doc-type {
                 width:16px!important;
@@ -26,6 +30,7 @@
                 color:#454545;
             }
 
+            .message-icon,
             .doc-size-warning {
                 width:16px!important;
                 height:16px!important;
@@ -41,9 +46,26 @@
                 height:16px!important;
                 color:#ee0000;
             }
+
+            .doc-desc {
+                padding:0px;
+                margin:0px;
+                color:#606060;
+                font-size:13px;
+            }
+            .doc-desc /deep/ * {
+                padding:0px;
+                margin:0px!important;
+            }
+
+            .message-icon,
+            .message-text,
             .doc-type,
             .doc-name,
-            .doc-size{
+            .doc-desc,
+            .doc-size-warning,
+            .doc-size,
+            .doc-new{
                 margin-right:10px;
             }
             .doc-size {
@@ -65,19 +87,61 @@
                 font-size:12px;
                 font-style:italic;
             }
-
-
-
+            .message {
+                margin-bottom:5px;
+            }
+            .add-doc {
+                color: #4285f4;
+            }
+            .add-doc span {
+                margin:5px;
+            }
+            .drag-empty {
+                text-align: center;
+                padding:30px;
+            }
+            .drag-empty .big {
+                font-size: 40px;
+                color: #8B8B8B;
+                margin:0px;
+            }
+            .label {
+                font-size: 0.75em;
+                color:#757575;
+                padding-bottom:5px;
+            }
         </style>
-        <div id="dragzone" on-dragover="{{_onDragOver}}" on-dragleave="{{_onDragLeave}}" on-drop="{{_onDrop}}">
-            <input type="file" directory is="core-input" required?="{{required}}" hidden id="input" multiple="multiple" on-change="{{_onDrop}}"/>
-            <template if="{{documents.length == 0}}">
-                <paper-button on-click="{{_selectFiles}}">Select files from computer</paper-button>
-                or drag files here
-            </template>
-            <template if="{{documents.length > 0}}">
-                <core-list id="list" data="{{documents}}" selectionEnabled="true" selection="{{selection}}" height="80" flex multi layout>
-                    <template>
+        <div class="label">
+            {{label}}
+        </div>
+        <paper-shadow z="1">
+            <div id="dragzone" on-dragover="{{_onDragOver}}" on-dragleave="{{_onDragLeave}}" on-drop="{{_onDrop}}" layout vertical>
+                <input type="file" name="file" is="core-input" required?="{{required}}" hidden id="input" multiple="multiple" />
+                <template if="{{scrolling}}">
+                    <div id="listScroller" hidden?="{{documents.length == 0}}" >
+                        <core-list id="list" data="{{documents}}" selectionEnabled="true" selection="{{selection}}" height="80" flex multi layout scrollTarget="{{$.listScroller}}">
+                            <template>
+                                <div class="document" layout horizontal>
+                                    <div flex layout horizontal>
+                                        <core-icon class="doc-type" icon="{{model.type | _displayMimeIcon}}"></core-icon>
+                                        <span class="doc-name">{{model.name}}</span>
+                                        <span class="doc-size">{{model.size | _displaySize}}</span>
+                                        <template if="{{model.size >= warningSize}}">
+                                            <core-icon class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></core-icon>
+                                        </template>
+                                        <template if="{{model.handle}}">
+                                            <span class="doc-new">New</span>
+                                        </template>
+                                        <paper-input flex label="Description" value="{{model.description}}" class="doc-desc"></paper-input>
+                                    </div>
+                                    <core-icon-button class="doc-del" icon="fa:minus-circle" on-tap="{{_deleteDoc}}" data-docid="{{model._cgId}}"></core-icon-button>
+                                </div>
+                            </template>
+                        </core-list>
+                    </div>
+                </template>
+                <template if="{{!scrolling}}">
+                    <template repeat="{{documents as model}}">
                         <div class="document" layout horizontal>
                             <div flex layout horizontal>
                                 <core-icon class="doc-type" icon="{{model.type | _displayMimeIcon}}"></core-icon>
@@ -89,139 +153,235 @@
                                 <template if="{{model.handle}}">
                                     <span class="doc-new">New</span>
                                 </template>
+                                <paper-input flex label="Description" value="{{model.description}}" class="doc-desc"></paper-input>
                             </div>
-                            <core-icon-button class="doc-del" icon="fa:minus-circle" on-tap="{{_deleteDoc}}" data-name="{{model.name}}"></core-icon-button>
+                            <core-icon-button class="doc-del" icon="fa:minus-circle" on-tap="{{_deleteDoc}}" data-docid="{{model._cgId}}"></core-icon-button>
                         </div>
                     </template>
-                </core-list>
-                <paper-button on-click="{{_selectFiles}}">Add more files</paper-button>
-            </template>
-        </div>
-
-
+                </template>
+                <div class="{{documents.length == 0 ? 'drag-empty' : ''}}">
+                    <template if="{{documents.length == 0}}">
+                        <p class="big">Drag files here</p>
+                        <p class="big">or</p>
+                    </template>
+                    <div>
+                        <paper-button id="addbutton" class="add-doc">
+                            <core-icon icon="fa:files-o"></core-icon>
+                            <span>
+                                <template if="{{documents.length == 0}}">Select files from your computer</template>
+                                <template if="{{documents.length > 0}}">Add documents</template>
+                            </span>
+                        </paper-button>
+                    </div>
+                </div>
+                <paper-toast id="messages" on-core-overlay-close-completed="{{_discardMessages}}" duration="{{_messages.length * 3000}}">
+                    <div class="messages" layout vertical>
+                        <template repeat="{{_messages as m}}">
+                            <div layout horizontal class="message">
+                                <template if="{{m.icon}}">
+                                    <core-icon class="message-icon" icon="{{m.icon}}"></core-icon>
+                                </template>
+                                <span class="message-text">{{m.text}}</span>
+                            </div>
+                        </template>
+                    </div>
+                </paper-toast>
+            </div>
+        </paper-shadow>
     </template>
     <script>
-        var CGFileManager = function(){
+        (function(){
+            var CGFileManager = function(){
 
-        };
-        CGFileManager.prototype = {
-            defaultIcon :"fa:file-o",
-            iconsMimeKeyWords :{
-                "fa:file-pdf-o":["pdf"],
-                "fa:file-image-o":["image"],
-                "fa:file-word-o":["word"],
-                "fa:file-archive-o":["zip", "rar", "compressed"],
-                "fa:file-text-o":["text"],
-                "fa:file-video-o":["video"],
-                "fa:file-audio-o":["audio"],
-                "fa:file-excel-o":["excel"],
-                "fa:file-powerpoint-o":["powerpoint"],
-            },
-            getIconForMime:function(mime){
-                if(mime) {
-                    for (var icon in this.iconsMimeKeyWords) {
-                        var keywords = this.iconsMimeKeyWords[icon];
-                        for (var i = 0; i < keywords.length; i++) {
-                            if (mime.indexOf(keywords[i]) != -1) {
-                                return icon;
+            };
+            CGFileManager.prototype = {
+                defaultIcon :"fa:file-o",
+                iconsMimeKeyWords :{
+                    "fa:file-pdf-o":["pdf"],
+                    "fa:file-image-o":["image"],
+                    "fa:file-word-o":["word"],
+                    "fa:file-archive-o":["zip", "rar", "compressed"],
+                    "fa:file-text-o":["text"],
+                    "fa:file-video-o":["video"],
+                    "fa:file-audio-o":["audio"],
+                    "fa:file-excel-o":["excel"],
+                    "fa:file-powerpoint-o":["powerpoint"],
+                },
+                getIconForMime:function(mime){
+                    if(mime) {
+                        for (var icon in this.iconsMimeKeyWords) {
+                            var keywords = this.iconsMimeKeyWords[icon];
+                            for (var i = 0; i < keywords.length; i++) {
+                                if (mime.indexOf(keywords[i]) != -1) {
+                                    return icon;
+                                }
                             }
                         }
                     }
+                    return this.defaultIcon;
                 }
-                return this.defaultIcon;
-            }
-        };
-        Polymer("cg-input-documents", {
-            label:null,
-            required:false,
-            selected:null,
-            _decoratorElement:null,
-            documents:[],
-            _selection:null,
-            warningSize:1024*1024*10,
-            _cgFileManager:new CGFileManager(),
-            _displayMimeIcon:function(mime){
-                return this._cgFileManager.getIconForMime(mime);
-            },
-            _displaySize:function(size){
-                var kb = 1024;
-                var mb = kb*kb;
-                console.log(size)
-                if(size < kb) {
-                    return (size).toFixed(2) + "b";
-                }else if(size >= kb && size < mb) {
-                    return (size / kb).toFixed(2) + "kb";
-                }else{
-                    return (size / mb).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "mb";
-                }
-            },
-            domReady:function(){
-                if(this.parentElement.tagName.toLowerCase() == "paper-input-decorator") {
-                    this._decoratorElement = this.parentElement; // _decoratorElement thing's quite nasty..
-                    this.label = this._decoratorElement.getAttribute("label");
-                }
-                this._colors = [].slice.call(this.querySelectorAll(".color"));
-//                this.selectedChanged();
-            },
-            _selectFiles:function(){
-                this.$.input.click();
-            },
-            _selectionChange:function(e){
-                console.log("_selectionChange: " + JSON.stringify(this._selection));
-            },
-            _neutralizeEvent:function(e){
-                e.stopPropagation();
-                e.preventDefault();
-            },
-            _onDragOver:function(e){
-                this._neutralizeEvent(e);
-                console.log("_onDragOver");
-            },
-            _onDragLeave:function(e){
-                this._neutralizeEvent(e);
-                console.log("_onDragLeave");
-            },
+            };
+            Polymer("cg-input-documents", {
+                label:null,
+                _id:1,
+                label:"Documents",
+                scrolling:true,
+                required:false,
+                selected:null,
+                _decoratorElement:null,
+                documents:[],
+                _messages:[],
+                _selection:null,
+                _dropzone:null,
+                warningSize:1024*1024*10,
+                _cgFileManager:new CGFileManager(),
+                _displayMimeIcon:function(mime){
+                    return this._cgFileManager.getIconForMime(mime);
+                },
+                documentsChanged:function(){
+                    for(var i =0; i<this.documents.length;i++){
+                        var doc = this.documents[i];
+                        if(!doc.hasOwnProperty("_cgId")) {
+                            doc._cgId = this._id++;
+                        }
+                    }
+                },
+                _displaySize:function(size){
+                    var kb = 1024;
+                    var mb = kb*kb;
+                    if(size < kb) {
+                        return (size).toFixed(2) + "b";
+                    }else if(size >= kb && size < mb) {
+                        return (size / kb).toFixed(2) + "kb";
+                    }else{
+                        return (size / mb).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "mb";
+                    }
+                },
+                domReady:function(){
+                    if(this.parentElement.tagName.toLowerCase() == "paper-input-decorator") {
+                        this._decoratorElement = this.parentElement; // _decoratorElement thing's quite nasty..
+                        this.label = this._decoratorElement.getAttribute("label");
+                    }
+                    this._colors = [].slice.call(this.querySelectorAll(".color"));
+    //                this.selectedChanged();
 
-            _onDrop:function(e){
-                this._neutralizeEvent(e);
-                var files = e.dataTransfer ? e.dataTransfer.files : e.currentTarget.files;
-                //e.dataTransfer.items[0].webkitGetAsEntry()
-                for(var i=0; i < files.length; i++){
-                    var file = files.item(i);
-                    if(!this.containsDoc(file)) {
-                        this.documents.push({
-                            name:file.name,
-                            size:file.size,
-                            type:file.type,
-                            handle:file
+                    this._dropzone = new Dropzone(this.shadowRoot.querySelector("#dragzone"), {
+                        url: "/file/post",
+                        autoProcessQueue: false,
+                        previewsContainer:false,
+                        maxFilesize:16,
+                        clickable:this.$.addbutton,
+                        dictFileTooBig: "File \"{{filename}}\" is too big ({{filesize}}MiB). Max filesize: {{maxFilesize}}MiB."
+                    });
+//                    this._dropzone.on("uploadprogress", function(file,a,b,c,d) {
+                    this._dropzone.on("addedfile", function(file) {
+                        this._dropzone.accept(file, function(error) {
+                            this._onDocAdded(file, error ? error.replace("{{filename}}", file.name) : error);
+                        }.bind(this));
+                    }.bind(this));
+                },
+                _onDocAdded:function(file, error){
+                    if(error) {
+                        if (this._async != undefined) {
+                            this.cancelAsync(this._async);
+                            console.log("cancelAsy");
+                        }
+                        this._messages.push({
+                            icon:"fa:exclamation-circle",
+                            text:error
+                        });
+                        this._async = this.async(function () {
+                            this._showMessages();
+                        }.bind(this), null, 10);
+                    }else {
+                        this.documents.splice(0, 0, {
+                            name: file.name,
+                            size: file.size,
+                            type: file.type,
+                            handle: file,
+                            _dz: this._dropzone
                         });
                     }
-                }
-            },
-            containsDoc:function(doc){
-                for(var i = 0; i < this.documents.length; i++){
-                    if(this.documents[i].name == doc.name){
-                        return true;
+                },
+                _deleteDoc:function(e){
+                    var doc = this._getDocById(e.currentTarget.dataset.docid);
+                    doc.handle && this._dropzone.removeFile(doc.handle);
+                    this.documents.splice(this.documents.indexOf(doc), 1);
+                },
+                _getDocById:function(id) {
+                    for(var i=0; i<this.documents.length;i++){
+                        if(this.documents[i]._cgId == id) {
+                            return this.documents[i];
+                        }
                     }
-                }
-                return false;
-            },
-//            crawlDirectory:function(file, dept){
-//                for(){
+                    return null;
+                },
+                _discardMessages:function(){
+                    this._messages = [];
+                },
+                _showMessages:function(){
+                    this.$.messages.show();
+                },
+                _selectFiles:function(){
+                    this.$.input.click();
+                },
+                _selectionChange:function(e){
+                    console.log("_selectionChange: " + JSON.stringify(this._selection));
+                },
+                _neutralizeEvent:function(e){
+                    e.stopPropagation();
+                    e.preventDefault();
+                },
+//                _onDragOver:function(e){
+//                    this._neutralizeEvent(e);
+//                    console.log("_onDragOver");
+//                },
+//                _onDragLeave:function(e){
+//                    this._neutralizeEvent(e);
+//                    console.log("_onDragLeave");
+//                },
 //
-//                }
-//            }
+//                _onDrop:function(e){
+//                    this._neutralizeEvent(e);
+//                    var files = e.dataTransfer ? e.dataTransfer.files : e.currentTarget.files;
+//                    e.dataTransfer.items[0].webkitGetAsEntry()
+//                    for(var i=0; i < files.length; i++){
+//                        var file = files.item(i);
+//                        if(!this.containsDoc(file)) {
+//                            this.documents.push({
+//                                name:file.name,
+//                                size:file.size,
+//                                type:file.type,
+//                                handle:file
+//                            });
+//                        }
+//                    }
+//                },
+                containsDoc:function(doc){
+                    for(var i = 0; i < this.documents.length; i++){
+                        if(this.documents[i].name == doc.name){
+                            return true;
+                        }
+                    }
+                    return false;
+                },
+    //            crawlDirectory:function(file, dept){
+    //                for(){
+    //
+    //                }
+    //            }
 
-//            selectedChanged:function(){
-//                this._colors.forEach(function(color){
-//                    color.setZ(color.dataset.value == this.selected ? 3 : 0);
-//                }.bind(this));
-//                this._decoratorElement && this._decoratorElement.inputChanged();
-//                this.fire('change', this.selected);
-//            },
-//            _selectionChanged:function(e){
-//                this.selected = e.currentTarget.dataset.value;
-//            }
-        });
+    //            selectedChanged:function(){
+    //                this._colors.forEach(function(color){
+    //                    color.setZ(color.dataset.value == this.selected ? 3 : 0);
+    //                }.bind(this));
+    //                this._decoratorElement && this._decoratorElement.inputChanged();
+    //                this.fire('change', this.selected);
+    //            },
+    //            _selectionChanged:function(e){
+    //                this.selected = e.currentTarget.dataset.value;
+    //            }
+            });
+        })()
     </script>
 </polymer-element>
