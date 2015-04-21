@@ -12,7 +12,7 @@
 <link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
 <script src="../dropzone/dist/dropzone.js"></script>
 
-<polymer-element name="cg-input-documents"  attributes="label documents scrolling">
+<polymer-element name="cg-input-documents"  attributes="label documents" layout vertical>
     <template>
         <style>
             cg-input-documents {
@@ -48,10 +48,11 @@
             }
 
             .doc-desc {
-                padding:0px;
+                padding:3px 0px 0px 0px;
                 margin:0px;
                 color:#606060;
                 font-size:13px;
+                min-width:200px;
             }
             .doc-desc /deep/ * {
                 padding:0px;
@@ -78,7 +79,7 @@
             .document:hover {
                 background-color:#dddddd;
             }
-            .document:hover .doc-name {
+            .document .doc-name:hover {
                 text-decoration: underline;
                 cursor:pointer;
             }
@@ -114,80 +115,63 @@
         <div class="label">
             {{label}}
         </div>
-        <paper-shadow z="1">
-            <div id="dragzone" on-dragover="{{_onDragOver}}" on-dragleave="{{_onDragLeave}}" on-drop="{{_onDrop}}" layout vertical>
-                <input type="file" name="file" is="core-input" required?="{{required}}" hidden id="input" multiple="multiple" />
-                <template if="{{scrolling}}">
-                    <div id="listScroller" hidden?="{{documents.length == 0}}" >
-                        <core-list id="list" data="{{documents}}" selectionEnabled="true" selection="{{selection}}" height="80" flex multi layout scrollTarget="{{$.listScroller}}">
-                            <template>
-                                <div class="document" layout horizontal>
-                                    <div flex layout horizontal>
-                                        <core-icon class="doc-type" icon="{{model.type | _displayMimeIcon}}"></core-icon>
-                                        <span class="doc-name">{{model.name}}</span>
-                                        <span class="doc-size">{{model.size | _displaySize}}</span>
-                                        <template if="{{model.size >= warningSize}}">
-                                            <core-icon class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></core-icon>
-                                        </template>
-                                        <template if="{{model.handle}}">
-                                            <span class="doc-new">New</span>
-                                        </template>
-                                        <paper-input flex label="Description" value="{{model.description}}" class="doc-desc"></paper-input>
-                                    </div>
-                                    <core-icon-button class="doc-del" icon="fa:minus-circle" on-tap="{{_deleteDoc}}" data-docid="{{model._cgId}}"></core-icon-button>
-                                </div>
-                            </template>
-                        </core-list>
-                    </div>
-                </template>
-                <template if="{{!scrolling}}">
-                    <template repeat="{{documents as model}}">
+
+        <div id="dragzone" on-dragover="{{_onDragOver}}" on-dragleave="{{_onDragLeave}}" on-drop="{{_onDrop}}" layout vertical relative>
+            <paper-shadow z="1" fit></paper-shadow>
+            <input type="file" name="file" is="core-input" required?="{{required}}" hidden id="input" multiple="multiple" />
+            <div id="listScroller" hidden?="{{documents.length == 0}}" >
+                <core-list id="list" data="{{documents}}" selectionEnabled="true" selection="{{selection}}" height="80" flex multi layout scrollTarget="{{$.listScroller}}">
+                    <template>
                         <div class="document" layout horizontal>
-                            <div flex layout horizontal>
-                                <core-icon class="doc-type" icon="{{model.type | _displayMimeIcon}}"></core-icon>
-                                <span class="doc-name">{{model.name}}</span>
-                                <span class="doc-size">{{model.size | _displaySize}}</span>
-                                <template if="{{model.size >= warningSize}}">
-                                    <core-icon class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></core-icon>
-                                </template>
-                                <template if="{{model.handle}}">
-                                    <span class="doc-new">New</span>
-                                </template>
+                            <div flex layout horizontal wrap>
+                                <div>
+                                    <core-icon class="doc-type" icon="{{model.type | _displayMimeIcon}}"></core-icon>
+                                    <span class="doc-name">{{model.name}}</span>
+                                    <span class="doc-size">{{model.size | _displaySize}}</span>
+                                    <template if="{{model.size >= warningSize}}">
+                                        <core-icon class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></core-icon>
+                                    </template>
+                                    <template if="{{model.handle}}">
+                                        <span class="doc-new">New</span>
+                                    </template>
+                                </div>
                                 <paper-input flex label="Description" value="{{model.description}}" class="doc-desc"></paper-input>
                             </div>
-                            <core-icon-button class="doc-del" icon="fa:minus-circle" on-tap="{{_deleteDoc}}" data-docid="{{model._cgId}}"></core-icon-button>
+                            <div>
+                                <core-icon-button class="doc-del" icon="fa:minus-circle" on-tap="{{_deleteDoc}}" data-docid="{{model._cgId}}"></core-icon-button>
+                            </div>
                         </div>
                     </template>
-                </template>
-                <div class="{{documents.length == 0 ? 'drag-empty' : ''}}">
-                    <template if="{{documents.length == 0}}">
-                        <p class="big">Drag files here</p>
-                        <p class="big">or</p>
-                    </template>
-                    <div>
-                        <paper-button id="addbutton" class="add-doc">
-                            <core-icon icon="fa:files-o"></core-icon>
-                            <span>
-                                <template if="{{documents.length == 0}}">Select files from your computer</template>
-                                <template if="{{documents.length > 0}}">Add documents</template>
-                            </span>
-                        </paper-button>
-                    </div>
-                </div>
-                <paper-toast id="messages" on-core-overlay-close-completed="{{_discardMessages}}" duration="{{_messages.length * 3000}}">
-                    <div class="messages" layout vertical>
-                        <template repeat="{{_messages as m}}">
-                            <div layout horizontal class="message">
-                                <template if="{{m.icon}}">
-                                    <core-icon class="message-icon" icon="{{m.icon}}"></core-icon>
-                                </template>
-                                <span class="message-text">{{m.text}}</span>
-                            </div>
-                        </template>
-                    </div>
-                </paper-toast>
+                </core-list>
             </div>
-        </paper-shadow>
+            <div class="{{documents.length == 0 ? 'drag-empty' : ''}}">
+                <template if="{{documents.length == 0}}">
+                    <p class="big">Drag files here</p>
+                    <p class="big">or</p>
+                </template>
+                <div>
+                    <paper-button id="addbutton" class="add-doc">
+                        <core-icon icon="fa:files-o"></core-icon>
+                        <span>
+                            <template if="{{documents.length == 0}}">Select files from your computer</template>
+                            <template if="{{documents.length > 0}}">Add documents</template>
+                        </span>
+                    </paper-button>
+                </div>
+            </div>
+            <paper-toast id="messages" on-core-overlay-close-completed="{{_discardMessages}}" duration="{{_messages.length * 3000}}">
+                <div class="messages" layout vertical>
+                    <template repeat="{{_messages as m}}">
+                        <div layout horizontal class="message">
+                            <template if="{{m.icon}}">
+                                <core-icon class="message-icon" icon="{{m.icon}}"></core-icon>
+                            </template>
+                            <span class="message-text">{{m.text}}</span>
+                        </div>
+                    </template>
+                </div>
+            </paper-toast>
+        </div>
     </template>
     <script>
         (function(){
