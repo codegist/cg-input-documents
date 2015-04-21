@@ -12,7 +12,7 @@
 <link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
 <script src="../dropzone/dist/dropzone.js"></script>
 
-<polymer-element name="cg-input-documents"  attributes="label documents" layout vertical>
+<polymer-element name="cg-input-documents"  attributes="label documents showAdded showLink linkLabel" layout vertical>
     <template>
         <style>
             cg-input-documents {
@@ -66,9 +66,23 @@
             .doc-desc,
             .doc-size-warning,
             .doc-size,
+            .doc-link,
             .doc-new{
                 margin-right:10px;
             }
+            .doc-link {
+                cursor:pointer;
+                font-size: 12px;
+                font-weight: bold;
+                padding: 4px;
+                color: rgb(105, 101, 255);
+                display: inline-block;
+            }
+
+            .doc-link paper-shadow {
+                border-radius:5px;
+            }
+            .doc-added,
             .doc-size {
                 color:#454545;
                 font-size:12px;
@@ -126,10 +140,19 @@
                             <div flex layout horizontal wrap>
                                 <div>
                                     <core-icon class="doc-type" icon="{{model.type | _displayMimeIcon}}"></core-icon>
+                                    <template if="{{showAdded == true}}">
+                                        <span class="doc-added">{{model.added | _displayAdded}}</span>
+                                    </template>
                                     <span class="doc-name">{{model.name}}</span>
                                     <span class="doc-size">{{model.size | _displaySize}}</span>
                                     <template if="{{model.size >= warningSize}}">
                                         <core-icon class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></core-icon>
+                                    </template>
+                                    <template if="{{showLink == true && model.link}}">
+                                        <div class="doc-link" relative on-tap="{{_onLinkClick}}" data-link="{{model.link}}">
+                                            <paper-shadow z="1" fit></paper-shadow>
+                                            {{linkLabel}}
+                                        </div>
                                     </template>
                                     <template if="{{model.handle}}">
                                         <span class="doc-new">New</span>
@@ -209,18 +232,25 @@
                 label:null,
                 _id:1,
                 label:"Documents",
+                showAdded:false,
+                showLink:false,
+                linkLabel:"link",
                 scrolling:true,
                 required:false,
                 selected:null,
-                _decoratorElement:null,
+                warningSize:1024*1024*10,
                 documents:[],
+                _decoratorElement:null,
                 _messages:[],
                 _selection:null,
                 _dropzone:null,
-                warningSize:1024*1024*10,
+                _addedFormat : Intl.DateTimeFormat(this.locale, {day:'2-digit', month:'2-digit', year:'numeric'}),
                 _cgFileManager:new CGFileManager(),
                 _displayMimeIcon:function(mime){
                     return this._cgFileManager.getIconForMime(mime);
+                },
+                _displayAdded:function(added){
+                    return this._addedFormat.format(added);
                 },
                 documentsChanged:function(){
                     for(var i =0; i<this.documents.length;i++){
@@ -229,6 +259,14 @@
                             doc._cgId = this._id++;
                         }
                     }
+                    this.documents.sort(function(a,b){
+                        if(!a.added || !b.added) {
+                            return 0;
+                        }
+                        var at = a.added.getTime();
+                        var bt = b.added.getTime();
+                        return at < bt ? 1 : at > bt ? -1 : 0;
+                    });
                 },
                 _displaySize:function(size){
                     var kb = 1024;
@@ -282,10 +320,14 @@
                             name: file.name,
                             size: file.size,
                             type: file.type,
+                            added:new Date(),
                             handle: file,
                             _dz: this._dropzone
                         });
                     }
+                },
+                _onLinkClick:function(e){
+                    this.fire("link-clicked", e.currentTarget.dataset.link);
                 },
                 _deleteDoc:function(e){
                     var doc = this._getDocById(e.currentTarget.dataset.docid);
