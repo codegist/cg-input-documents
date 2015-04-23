@@ -6,13 +6,13 @@
 <link href="../core-icon/core-icon.html" rel="import">
 <link href="../core-icon-button/core-icon-button.html" rel="import">
 <link href="../core-list/core-list.html" rel="import">
-<link href="../cg-lightdom-element/cg-lightdom-element.html" rel="import">
+<link href="../cg-base/cg-base.html" rel="import">
 <link href="../font-awesome-polymer-icons/fa-icons.html" rel="import" >
 
 <link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
 <script src="../dropzone/dist/dropzone.js"></script>
 
-<polymer-element name="cg-input-documents"  attributes="label documents showAdded showLink linkLabel" layout vertical>
+<polymer-element name="cg-input-documents" extends="cg-base" attributes="label documents showAdded showLink linkLabel datarequest defaultparams forcedatarequest" layout vertical>
     <template>
         <style>
             cg-input-documents {
@@ -239,7 +239,8 @@
                 required:false,
                 selected:null,
                 warningSize:1024*1024*10,
-                documents:[],
+                documents:null,
+                forcedatarequest:false,
                 _decoratorElement:null,
                 _messages:[],
                 _selection:null,
@@ -301,6 +302,17 @@
                             this._onDocAdded(file, error ? error.replace("{{filename}}", file.name) : error);
                         }.bind(this));
                     }.bind(this));
+                    this.defaultparamsChanged();
+                },
+                defaultparamsChanged:function(){
+                    if(this.forcedatarequest) {
+                        console.log("[cg-input-documents] data request forced, firing");
+                        this.fireDataRequest("document-list", null, function(response){
+                            this.documents = response.data;
+                        }.bind(this));
+                    }else{
+                        console.log("[cg-input-documents] documents provided, using them");
+                    }
                 },
                 _onDocAdded:function(file, error){
                     if(error) {

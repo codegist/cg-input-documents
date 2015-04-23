@@ -4,6 +4,7 @@
     <meta name="viewport" content="width=device-width, user-scalable=no">
     <title>cg-datetime-input Demo</title>
     <link rel="import" href="../paper-input/paper-input-decorator.html">
+    <link rel="import" href="../cg-datasource/cg-datasource-testdata.html">
     <link rel="import" href="cg-input-documents.html">
     <style>
         .demo {
@@ -33,7 +34,7 @@
 <body unresolved fullbleed layout vertical center center-justified>
 
 <template id="sandbox" is="auto-binding">
-
+    <cg-datasource-testdata></cg-datasource-testdata>
     <section layout vertical left>
         <h2>input select form demo required selected {{selected}}</h2>
         <section>
@@ -45,11 +46,23 @@
             </div>
         </section>
     </section>
+    <section layout vertical left>
+        <h2>with datasource</h2>
+        <section>
+            <div vertical layout class="party-info-form">
+                <paper-input-decorator label="Label" floatingLabel autoValidate>
+                    <input is="core-input" required value="">
+                </paper-input-decorator>
+                <cg-input-documents required scrolling="false" datarequest="cg-agenda-editor" defaultparams="{{defaultParams}}"></cg-input-documents>
+            </div>
+        </section>
+    </section>
 </template>
 
 <script>
     window.addEventListener('template-bound', function(){
         var sandbox = document.getElementById('sandbox');
+        sandbox.defaultParams = {eventId:1};
         sandbox.documdents = [{
             "name": "c29bf435b98b.jpg",
             "size": 359551,
