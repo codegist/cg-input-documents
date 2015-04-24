@@ -133,7 +133,7 @@
             <paper-shadow z="1" fit></paper-shadow>
             <input type="file" name="file" is="core-input" required?="{{required}}" hidden id="input" multiple="multiple" />
             <div id="listScroller" hidden?="{{documents.length == 0}}" >
-                <core-list id="list" data="{{documents}}" selectionEnabled="true" selection="{{selection}}" height="80" flex multi layout scrollTarget="{{$.listScroller}}">
+                <core-list id="list" data="{{documents}}" selectionEnabled="true" selection="{{selection}}" height="80" flex layout scrollTarget="{{$.listScroller}}">
                     <template>
                         <div class="document" layout horizontal>
                             <div flex layout horizontal wrap>
