@@ -12,7 +12,7 @@
 <link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
 <script src="../dropzone/dist/min/dropzone.min.js"></script>
 
-<polymer-element name="cg-input-documents" extends="cg-base" attributes="label documents showAdded showLink linkLabel datarequest defaultparams" layout vertical>
+<polymer-element name="cg-input-documents" extends="cg-base" attributes="label documents showAdded showLink linkLabel dataTagPrefix dataBaseParams" layout vertical>
     <template>
         <style>
             cg-input-documents {
@@ -129,12 +129,11 @@
         <div class="label">
             {{label}}
         </div>
-
         <div id="dragzone" on-dragover="{{_onDragOver}}" on-dragleave="{{_onDragLeave}}" on-drop="{{_onDrop}}" layout vertical relative>
             <paper-shadow z="1" fit></paper-shadow>
             <input type="file" name="file" is="core-input" required?="{{required}}" hidden id="input" multiple="multiple" />
-            <div id="listScroller" hidden?="{{_documents.length == 0}}" >
-                <core-list id="list" data="{{_documents}}" selectionEnabled="true" selection="{{selection}}" height="80" flex multi layout scrollTarget="{{$.listScroller}}">
+            <div id="listScroller" hidden?="{{documents.length == 0}}" >
+                <core-list id="list" data="{{documents}}" selectionEnabled="true" selection="{{selection}}" height="80" flex multi layout scrollTarget="{{$.listScroller}}">
                     <template>
                         <div class="document" layout horizontal>
                             <div flex layout horizontal wrap>
@@ -167,8 +166,8 @@
                     </template>
                 </core-list>
             </div>
-            <div class="{{_documents.length == 0 ? 'drag-empty' : ''}}">
-                <template if="{{_documents.length == 0}}">
+            <div class="{{documents.length == 0 ? 'drag-empty' : ''}}">
+                <template if="{{documents.length == 0}}">
                     <p class="big">Drag files here</p>
                     <p class="big">or</p>
                 </template>
@@ -176,8 +175,8 @@
                     <paper-button id="addbutton" class="add-doc">
                         <core-icon icon="fa:files-o"></core-icon>
                         <span>
-                            <template if="{{_documents.length == 0}}">Select files from your computer</template>
-                            <template if="{{_documents.length > 0}}">Add documents</template>
+                            <template if="{{documents.length == 0}}">Select files from your computer</template>
+                            <template if="{{documents.length > 0}}">Add documents</template>
                         </span>
                     </paper-button>
                 </div>
@@ -236,11 +235,8 @@
                 linkLabel:"link",
                 scrolling:true,
                 required:false,
-                selected:null,
                 warningSize:1024*1024*10,
-                documents:null,
-                _documents:null,
-                forcedatarequest:false,
+                documents:[],
                 _decoratorElement:null,
                 _messages:[],
                 _selection:null,
@@ -254,16 +250,13 @@
                     return this._addedFormat.format(added);
                 },
                 documentsChanged:function(){
-                    this._documents = this.documents;
-                },
-                _documentsChanged:function(){
-                    for(var i =0; i<this._documents.length;i++){
-                        var doc = this._documents[i];
+                    for(var i =0; i<this.documents.length;i++){
+                        var doc = this.documents[i];
                         if(!doc.hasOwnProperty("_cgId")) {
                             doc._cgId = this._id++;
                         }
                     }
-                    this._documents.sort(function(a,b){
+                    this.documents.sort(function(a,b){
                         if(!a.added || !b.added) {
                             return 0;
                         }
@@ -289,9 +282,6 @@
                         this._decoratorElement = this.parentElement; // _decoratorElement thing's quite nasty..
                         this.label = this._decoratorElement.getAttribute("label");
                     }
-                    this._colors = [].slice.call(this.querySelectorAll(".color"));
-    //                this.selectedChanged();
-
                     this._dropzone = new Dropzone(this.shadowRoot.querySelector("#dragzone"), {
                         url: "/file/post",
                         autoProcessQueue: false,
@@ -306,17 +296,18 @@
                             this._onDocAdded(file, error ? error.replace("{{filename}}", file.name) : error);
                         }.bind(this));
                     }.bind(this));
-                    this.defaultparamsChanged();
-                },
-                defaultparamsChanged:function(){
-                    if(this.documents == null) {
+                    this.documentsChanged();
+                    if(this.isDataAware()) {
                         console.log("[cg-input-documents] no documents provided firing data request");
-                        this.fireDataRequest("document-list", null, function(response){
-                            this._documents = response.data;
-                        }.bind(this));
+                        this.onRefreshData();
                     }else{
                         console.log("[cg-input-documents] documents provided, using them");
                     }
+                },
+                onRefreshData:function(){
+                    this.fireDataRequest("document-list", function(response){
+                        this.documents = response.data;
+                    }.bind(this));
                 },
                 _onDocAdded:function(file, error){
                     if(error) {
@@ -332,7 +323,7 @@
                             this._showMessages();
                         }.bind(this), null, 10);
                     }else {
-                        this._documents.splice(0, 0, {
+                        this.documents.splice(0, 0, {
                             name: file.name,
                             size: file.size,
                             type: file.type,
@@ -348,12 +339,12 @@
                 _deleteDoc:function(e){
                     var doc = this._getDocById(e.currentTarget.dataset.docid);
                     doc.handle && this._dropzone.removeFile(doc.handle);
-                    this._documents.splice(this._documents.indexOf(doc), 1);
+                    this.documents.splice(this.documents.indexOf(doc), 1);
                 },
                 _getDocById:function(id) {
-                    for(var i=0; i<this._documents.length;i++){
-                        if(this._documents[i]._cgId == id) {
-                            return this._documents[i];
+                    for(var i=0; i<this.documents.length;i++){
+                        if(this.documents[i]._cgId == id) {
+                            return this.documents[i];
                         }
                     }
                     return null;

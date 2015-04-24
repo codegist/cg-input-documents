@@ -1,0 +1,68 @@
+<link href="../polymer/polymer.html" rel="import">
+<link href="../cg-datasource/cg-datasource-base.html" rel="import">
+
+<polymer-element name="cg-datasource-testdata" extends="cg-datasource-base">
+    <script>
+        (function() {
+            var documents = [{
+                "name": "c29bf435b98b.jpg",
+                "size": 359551,
+                "type": "image/jpeg",
+                "description":"Sed id lacus vitae tortor convallis rhoncus a non ipsum.",
+                "added":new Date("2015-01-18T09:00:00.000-0500"),
+                "link":23
+            }, {
+                "name": "docs.zip",
+                "size": 1607693765,
+                "type": "application/zip",
+                "description":"Sed tempus magna et ligula imperdiet gravida. Proin semper augue justo, sit amet dictum erat porttitor vitae.",
+                "added":new Date("2015-01-18T09:00:00.000-0500")
+            }, {
+                "name": "eclipse-java-luna-SR1-linux-gtk-x86_64.tar.gz",
+                "size": 160242552,
+                "type": "application/gzip",
+                "added":new Date("2015-02-01T09:00:00.000-0500"),
+                "link":56
+            }, {
+                "name": "jdk-8u25-linux-x64.gz",
+                "size": 160872482,
+                "type": "application/gzip",
+                "added":new Date("2015-02-18T09:00:00.000-0500")
+            }, {
+                "name": "salamander",
+                "size": 63,
+                "type": "",
+                "description":"Proin semper augue justo, sit amet dictum erat porttitor vitae.",
+                "added":new Date("2015-03-20T09:00:00.000-0500"),
+                "link":34
+            }, {
+                "name": "singlepath.svg",
+                "size": 47770,
+                "type": "image/svg+xml",
+                "description":"Sed id lacus vitae tortor convallis rhoncus a non ipsum.",
+                "added":new Date("2015-03-11T09:00:00.000-0500")
+            }, {
+                "name": "stock-vector-natural-grass-and-gr.jpg",
+                "size": 71119,
+                "type": "image/jpeg",
+                "description":"Sed tempus magna et ligula imperdiet gravida.",
+                "added":new Date("2015-03-14T09:00:00.000-0500"),
+                "link":56
+            }];
+            Polymer({
+                getProvidersMap:function(){
+                    return {
+                        'test-document-list':this.getDocuments
+                    };
+                },
+                getDocuments:function(callback, params){
+                    console.log("### Datasource[TestData] getUserDocuments(params:"+JSON.stringify(params)+")");
+                    return callback({
+                        success:true,
+                        data:params.eventId == 1 ? documents : [],
+                    });
+                },
+            });
+        })();
+    </script>
+</polymer-element>
