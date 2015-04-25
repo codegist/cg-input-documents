@@ -86,12 +86,14 @@
             .doc-name,
             .doc-desc,
             .doc-size-warning,
-            .doc-upload-error-icon,
-            .doc-upload-success-icon,
             .doc-size,
             .doc-link,
             .doc-new{
                 margin-right:10px;
+            }
+            .doc-upload-error-icon,
+            .doc-upload-success-icon {
+                margin-right:5px;
             }
             .doc-footer {
                 margin-top:5px;
@@ -99,28 +101,23 @@
                 height:10px;
             }
 
-            .document.transfer-success .doc-upload-progressbar,
-            .document.transfer-success .doc-upload-progressbar-wrapper {
-                border:1px solid #46C82A;
+            .document.transfer-success .doc-upload-progressbar {
                 background-color: #46C82A;
             }
 
-            .document.transfer-error .doc-upload-progressbar,
-            .document.transfer-error .doc-upload-progressbar-wrapper {
-                border:1px solid #d34336;
+            .document.transfer-error .doc-upload-progressbar {
                 background-color: #d34336;
             }
 
             .doc-upload-progressbar-wrapper{
                 position:relative;
                 height:10px;
-                background-color: white;
-                border:1px solid #A7ACE5;
             }
             .doc-upload-progressbar{
                 position:absolute;
                 height:100%;
                 background-color: #A7ACE5;
+                border-radius: 5px;
             }
             .doc-upload-progress-percent{
                 width:30px;
@@ -236,7 +233,8 @@
                                 <template if="{{model.processing}}">
                                     <!--<template if="{{model.processing.finished == false)}}">-->
                                         <div flex class="doc-upload-progressbar-wrapper">
-                                            <div class="doc-upload-progressbar" style="width:{{model.processing.progress}}%"></div>
+                                            <paper-shadow class="doc-upload-progressbar" z="1" style="width:{{model.processing.progress}}%"></paper-shadow>
+                                            <!--<div ></div>-->
                                         </div>
                                         <div class="doc-upload-progress-percent">
                                             {{model.processing.progress | _displayProgress}}
