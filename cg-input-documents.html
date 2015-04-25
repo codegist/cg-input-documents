@@ -12,7 +12,7 @@
 <link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
 <script src="../dropzone/dist/min/dropzone.min.js"></script>
 
-<polymer-element name="cg-input-documents" extends="cg-base" attributes="label documents showAdded showLink linkLabel dataTagPrefix dataBaseParams" layout vertical>
+<polymer-element name="cg-input-documents" extends="cg-base" attributes="label documents showAdded showLink linkLabel dataTagPrefix dataBaseParams refreshOnApplicationEvents" layout vertical>
     <template>
         <style>
             cg-input-documents {
@@ -236,13 +236,20 @@
                 scrolling:true,
                 required:false,
                 warningSize:1024*1024*10,
-                documents:[],
+                refreshOnApplicationEvents:null,
+                documents:null,
                 _decoratorElement:null,
-                _messages:[],
+                _messages:null,
                 _selection:null,
                 _dropzone:null,
                 _addedFormat : Intl.DateTimeFormat(this.locale, {day:'2-digit', month:'2-digit', year:'numeric'}),
                 _cgFileManager:new CGFileManager(),
+                created:function(){
+                    this.super();
+                    this.refreshOnApplicationEvents = [];
+                    this.documents = [];
+                    this._messages = [];
+                },
                 _displayMimeIcon:function(mime){
                     return this._cgFileManager.getIconForMime(mime);
                 },
@@ -297,6 +304,9 @@
                         }.bind(this));
                     }.bind(this));
                     this.documentsChanged();
+                    this.refresh();
+                },
+                refresh:function(){
                     if(this.isDataAware()) {
                         console.log("[cg-input-documents] no documents provided firing data request");
                         this.onRefreshData();
@@ -365,6 +375,12 @@
                     e.stopPropagation();
                     e.preventDefault();
                 },
+                onApplicationEvent:function(type, event){
+                    if(this.refreshOnApplicationEvents && this.refreshOnApplicationEvents.indexOf(type) != -1) {
+                        console.log("[cg-input-documents] onApplicationEvent(type:'"+type+"') received, trigger data refresh");
+                        this.refresh();
+                    }
+                }
             });
         })()
     </script>
