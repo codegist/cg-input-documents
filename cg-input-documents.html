@@ -12,7 +12,7 @@
 <link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
 <script src="../dropzone/dist/min/dropzone.min.js"></script>
 
-<polymer-element name="cg-input-documents" extends="cg-base" attributes="label documents showAdded showLink linkLabel dataTagPrefix dataBaseParams refreshOnApplicationEvents" layout vertical>
+<polymer-element name="cg-input-documents" extends="cg-base" attributes="label documents showAdded showLink linkLabel dataTagPrefix dataBaseParams refreshOnApplicationEvents autoUpload" layout vertical>
     <template>
         <style>
             cg-input-documents {
@@ -30,7 +30,13 @@
                 color:#454545;
             }
 
+            .doc-upload-success-icon {
+                width:16px!important;
+                height:16px!important;
+                color:#46C82A;
+            }
             .message-icon,
+            .doc-upload-error-icon,
             .doc-size-warning {
                 width:16px!important;
                 height:16px!important;
@@ -44,7 +50,7 @@
             .doc-del /deep/ core-icon {
                 width:16px!important;
                 height:16px!important;
-                color:#ee0000;
+                color:#d34336;
             }
 
             .doc-desc {
@@ -65,10 +71,46 @@
             .doc-name,
             .doc-desc,
             .doc-size-warning,
+            .doc-upload-error-icon,
+            .doc-upload-success-icon,
             .doc-size,
             .doc-link,
             .doc-new{
                 margin-right:10px;
+            }
+            .doc-footer {
+                margin-top:5px;
+                margin-bottom:5px;
+                height:10px;
+            }
+
+            .document.transfer-success .doc-upload-progressbar,
+            .document.transfer-success .doc-upload-progressbar-wrapper {
+                border:1px solid #46C82A;
+                background-color: #46C82A;
+            }
+
+            .document.transfer-error .doc-upload-progressbar,
+            .document.transfer-error .doc-upload-progressbar-wrapper {
+                border:1px solid #d34336;
+                background-color: #d34336;
+            }
+
+            .doc-upload-progressbar-wrapper{
+                position:relative;
+                height:10px;
+                background-color: white;
+                border:1px solid #A7ACE5;
+            }
+            .doc-upload-progressbar{
+                position:absolute;
+                height:100%;
+                background-color: #A7ACE5;
+            }
+            .doc-upload-progress-percent{
+                width:40px;
+                margin-left:5px;
+                margin-right:5px;
             }
             .doc-link {
                 cursor:pointer;
@@ -83,15 +125,22 @@
                 border-radius:5px;
             }
             .doc-added,
+            .doc-upload-progress-percent,
+            .doc-upload-error,
+            .doc-upload-error-label,
+            .doc-upload-success,
             .doc-size {
                 color:#454545;
                 font-size:12px;
+            }
+            .doc-upload-error {
+                color:#d34336;
             }
             .document {
                 padding:10px;
             }
             .document:hover {
-                background-color:#dddddd;
+                /*background-color:#dddddd;*/
             }
             .document .doc-name:hover {
                 text-decoration: underline;
@@ -131,36 +180,66 @@
         </div>
         <div id="dragzone" on-dragover="{{_onDragOver}}" on-dragleave="{{_onDragLeave}}" on-drop="{{_onDrop}}" layout vertical relative>
             <paper-shadow z="1" fit></paper-shadow>
-            <input type="file" name="file" is="core-input" required?="{{required}}" hidden id="input" multiple="multiple" />
+            <input type="file" name="file" is="core-input" required?="{{required}}" hidden id="input" mudltiple="muldtiple" />
             <div id="listScroller" hidden?="{{documents.length == 0}}" >
                 <core-list id="list" data="{{documents}}" selectionEnabled="true" selection="{{selection}}" height="80" flex layout scrollTarget="{{$.listScroller}}">
                     <template>
-                        <div class="document" layout horizontal>
-                            <div flex layout horizontal wrap>
-                                <div>
-                                    <core-icon class="doc-type" icon="{{model.type | _displayMimeIcon}}"></core-icon>
-                                    <template if="{{showAdded == true}}">
-                                        <span class="doc-added">{{model.added | _displayAdded}}</span>
-                                    </template>
-                                    <span class="doc-name">{{model.name}}</span>
-                                    <span class="doc-size">{{model.size | _displaySize}}</span>
-                                    <template if="{{model.size >= warningSize}}">
-                                        <core-icon class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></core-icon>
-                                    </template>
-                                    <template if="{{showLink == true && model.link}}">
-                                        <div class="doc-link" relative on-tap="{{_onLinkClick}}" data-link="{{model.link}}">
-                                            <paper-shadow z="1" fit></paper-shadow>
-                                            {{linkLabel}}
-                                        </div>
-                                    </template>
-                                    <template if="{{model.handle}}">
-                                        <span class="doc-new">New</span>
-                                    </template>
+                        <div class="document {{model.processing.finished == true ? model.processing.success ? 'transfer-success' : 'transfer-error' : ''}}" layout vertical>
+                            <div layout horizontal>
+                                <div flex layout horizontal wrap>
+                                    <div>
+                                        <core-icon class="doc-type" icon="{{model.type | _displayMimeIcon}}"></core-icon>
+                                        <template if="{{showAdded == true}}">
+                                            <span class="doc-added">{{model.added | _displayAdded}}</span>
+                                        </template>
+                                        <span class="doc-name">{{model.name}}</span>
+                                        <span class="doc-size">{{model.size | _displaySize}}</span>
+                                        <template if="{{model.size >= warningSize}}">
+                                            <core-icon class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></core-icon>
+                                        </template>
+                                        <template if="{{showLink == true && model.link}}">
+                                            <div class="doc-link" relative on-tap="{{_onLinkClick}}" data-link="{{model.link}}">
+                                                <paper-shadow z="1" fit></paper-shadow>
+                                                {{linkLabel}}
+                                            </div>
+                                        </template>
+                                        <template if="{{model.handle}}">
+                                            <span class="doc-new">New</span>
+                                        </template>
+                                    </div>
+                                    <paper-input flex label="Description" value="{{model.description}}" class="doc-desc"></paper-input>
                                 </div>
-                                <paper-input flex label="Description" value="{{model.description}}" class="doc-desc"></paper-input>
+                                <div>
+                                    <core-icon-button class="doc-del" icon="fa:minus-circle" on-tap="{{_deleteDoc}}" data-docid="{{model._cgId}}"></core-icon-button>
+                                </div>
                             </div>
-                            <div>
-                                <core-icon-button class="doc-del" icon="fa:minus-circle" on-tap="{{_deleteDoc}}" data-docid="{{model._cgId}}"></core-icon-button>
+                            <div class="doc-footer" layout horizontal>
+                                <template if="{{model.processing}}">
+                                    <!--<template if="{{model.processing.finished == false)}}">-->
+                                        <div flex class="doc-upload-progressbar-wrapper">
+                                            <div class="doc-upload-progressbar" style="width:{{model.processing.progress}}%"></div>
+                                        </div>
+                                        <div class="doc-upload-progress-percent">
+                                            {{model.processing.progress | _displayProgress}}
+                                        </div>
+                                    <!--</template>-->
+                                    <template if="{{model.processing.finished == true && model.processing.success == false}}">
+                                        <core-icon class="doc-upload-error-icon" icon="fa:exclamation-triangle"></core-icon>
+                                        <span class="doc-upload-error-label">Transfer failed:&nbsp;</span>
+                                        <span class="doc-upload-error">
+                                            <template if="{{model.processing.canceled == true}}">
+                                                cancelled by user
+                                            </template>
+                                            <template if="{{!model.processing.canceled}}">
+                                                Server error
+                                            </template>
+                                        </span>
+                                    </template>
+                                    <template if="{{model.processing.finished == true && model.processing.success == true}}">
+                                        <core-icon class="doc-upload-success-icon" icon="fa:check-circle-o"></core-icon>
+                                        <span class="doc-upload-success">Document transferred</span>
+                                    </template>
+                                </template>
                             </div>
                         </div>
                     </template>
@@ -177,6 +256,12 @@
                         <span>
                             <template if="{{documents.length == 0}}">Select files from your computer</template>
                             <template if="{{documents.length > 0}}">Add documents</template>
+                        </span>
+                    </paper-button>
+                    <paper-button id="uploadbutton" class="add-doc" on-tap="{{startUpload}}">
+                        <core-icon icon="fa:files-o"></core-icon>
+                        <span>
+                            Upload
                         </span>
                     </paper-button>
                 </div>
@@ -229,15 +314,18 @@
             };
             Polymer("cg-input-documents", {
                 _id:1,
+                uploadUrl:"/documents/upload",
                 label:"Documents",
                 showAdded:false,
                 showLink:false,
                 linkLabel:"link",
                 scrolling:true,
                 required:false,
+                autoUpload:false,
                 warningSize:1024*1024*10,
                 refreshOnApplicationEvents:null,
                 documents:null,
+                _uploadProgress:null,
                 _decoratorElement:null,
                 _messages:null,
                 _selection:null,
@@ -249,6 +337,11 @@
                     this.refreshOnApplicationEvents = [];
                     this.documents = [];
                     this._messages = [];
+                },
+                autoUploadChanged:function(){
+                    if(this._dropzone) {
+                        this._dropzone.options.autoProcessQueue = this.autoUpload;
+                    }
                 },
                 _displayMimeIcon:function(mime){
                     return this._cgFileManager.getIconForMime(mime);
@@ -273,6 +366,9 @@
                     });
 
                 },
+                _displayProgress:function(progress) {
+                    return Math.round(progress) + "%";
+                },
                 _displaySize:function(size){
                     var kb = 1024;
                     var mb = kb*kb;
@@ -290,10 +386,11 @@
                         this.label = this._decoratorElement.getAttribute("label");
                     }
                     this._dropzone = new Dropzone(this.shadowRoot.querySelector("#dragzone"), {
-                        url: "/file/post",
-                        autoProcessQueue: false,
+                        url: this.uploadUrl,
+                        autoProcessQueue: this.autoUpload,
                         previewsContainer:false,
-                        maxFilesize:16,
+                        uploadMultiple:false,
+//                        maxFilesize:16,
                         clickable:this.$.addbutton,
                         dictFileTooBig: "File \"{{filename}}\" is too big ({{filesize}}MiB). Max filesize: {{maxFilesize}}MiB."
                     });
@@ -303,8 +400,70 @@
                             this._onDocAdded(file, error ? error.replace("{{filename}}", file.name) : error);
                         }.bind(this));
                     }.bind(this));
-                    this.documentsChanged();
+
+                    var processQueueIfNeeded = function() {
+                        if(this._dropzone.options.autoProcessQueue == false && this._dropzone.getQueuedFiles().length > 0) {
+                            this._dropzone.processQueue();
+                        }
+                        //console.log("canceledmultiple\n" + JSON.stringify(arguments, null, "\t"))
+                    }.bind(this);
+
+                    this._dropzone.on("processing", function(file){
+                        this._getDocByHandle(file).processing = {
+                            progress:0,
+                            bytes:0,
+                            finished:false,
+                            success:undefined,
+                            canceled:undefined,
+                            data:undefined
+                        };
+                    }.bind(this));
+                    this._dropzone.on("uploadprogress", function(file, progress, bytes){
+                        var doc = this._getDocByHandle(file);
+                        if(!doc.processing) return;
+                        doc.processing.progress = progress;
+                        doc.processing.bytes = bytes;
+                        console.log("progress of " + doc.name)
+                    }.bind(this));
+                    this._dropzone.on("error", function(file, message, xhr){
+                        var doc = this._getDocByHandle(file);
+                        if(!doc) return;
+                        if(doc.processing) {
+                            doc.processing.finished = true;
+                            doc.processing.success = false;
+                            doc.processing.data = message;
+                        }
+                        processQueueIfNeeded();
+                    }.bind(this));
+                    this._dropzone.on("success", function(file, responseText, e){
+                        var doc = this._getDocByHandle(file);
+                        if(!doc) return;
+                        if(doc.processing) {
+                            doc.processing.finished = true;
+                            doc.processing.success = true;
+                            doc.processing.data = responseText;
+                        }
+                        processQueueIfNeeded();
+                    }.bind(this));
+                    this._dropzone.on("canceled", function(file){
+                        var doc = this._getDocByHandle(file);
+                        if(!doc) return;
+                        if(doc.processing) {
+                            doc.processing.finished = true;
+                            doc.processing.success = false;
+                            doc.processing.canceled = true;
+                        }
+                        processQueueIfNeeded();
+                    }.bind(this));
+
                     this.refresh();
+                },
+
+                startUpload:function() {
+//                    while (this._dropzone.getQueuedFiles().length > 0) {
+                        console.log("this._dropzone.processQueue() : "+ this._dropzone.processQueue())
+//                        ;
+//                    }
                 },
                 refresh:function(){
                     if(this.isDataAware()) {
@@ -323,7 +482,6 @@
                     if(error) {
                         if (this._async != undefined) {
                             this.cancelAsync(this._async);
-                            console.log("cancelAsy");
                         }
                         this._messages.push({
                             icon:"fa:exclamation-circle",
@@ -348,12 +506,22 @@
                 },
                 _deleteDoc:function(e){
                     var doc = this._getDocById(e.currentTarget.dataset.docid);
-                    doc.handle && this._dropzone.removeFile(doc.handle);
+                    if(doc.handle) {
+                        this._dropzone.removeFile(doc.handle);
+                    }
                     this.documents.splice(this.documents.indexOf(doc), 1);
                 },
                 _getDocById:function(id) {
                     for(var i=0; i<this.documents.length;i++){
                         if(this.documents[i]._cgId == id) {
+                            return this.documents[i];
+                        }
+                    }
+                    return null;
+                },
+                _getDocByHandle:function(handle) {
+                    for(var i=0; i<this.documents.length;i++){
+                        if(this.documents[i].handle == handle) {
                             return this.documents[i];
                         }
                     }

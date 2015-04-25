@@ -19,17 +19,17 @@
 <template id="sandbox" is="auto-binding" >
     <cg-datasource-testdata></cg-datasource-testdata>
     <div layout horizontal wrap>
-        <section>
-            <h2>with fixed data</h2>
-            <section>
-                <div vertical layout class="party-info-form">
-                    <paper-input-decorator label="Label" floatingLabel autoValidate>
-                        <input is="core-input" required value="">
-                    </paper-input-decorator>
-                    <cg-input-documents required documents="{{documents}}" scrolling="false"></cg-input-documents>
-                </div>
-            </section>
-        </section>
+        <!--<section>-->
+            <!--<h2>with fixed data</h2>-->
+            <!--<section>-->
+                <!--<div vertical layout class="party-info-form">-->
+                    <!--<paper-input-decorator label="Label" floatingLabel autoValidate>-->
+                        <!--<input is="core-input" required value="">-->
+                    <!--</paper-input-decorator>-->
+                    <!--<cg-input-documents required documents="{{documents}}" scrolling="false"></cg-input-documents>-->
+                <!--</div>-->
+            <!--</section>-->
+        <!--</section>-->
         <section>
             <h2>with no data</h2>
             <section>
@@ -37,32 +37,32 @@
                     <paper-input-decorator label="Label" floatingLabel autoValidate>
                         <input is="core-input" required value="">
                     </paper-input-decorator>
-                    <cg-input-documents required scrolling="false"></cg-input-documents>
+                    <cg-input-documents required scrolling="false" autoUpload="false"></cg-input-documents>
                 </div>
             </section>
         </section>
-        <section>
-            <h2>with datasource</h2>
-            <section>
-                <div vertical layout class="party-info-form">
-                    <paper-input-decorator label="Label" floatingLabel autoValidate>
-                        <input is="core-input" required value="">
-                    </paper-input-decorator>
-                    <cg-input-documents required scrolling="false" dataTagPrefix="test" dataBaseParams="{{defaultParams}}"></cg-input-documents>
-                </div>
-            </section>
-        </section>
-        <section>
-            <h2>with datasource no data</h2>
-            <section>
-                <div vertical layout class="party-info-form">
-                    <paper-input-decorator label="Label" floatingLabel autoValidate>
-                        <input is="core-input" required value="">
-                    </paper-input-decorator>
-                    <cg-input-documents required scrolling="false" dataTagPrefix="test" dataBaseParams="{{defaultParams2}}"></cg-input-documents>
-                </div>
-            </section>
-        </section>
+        <!--<section>-->
+            <!--<h2>with datasource</h2>-->
+            <!--<section>-->
+                <!--<div vertical layout class="party-info-form">-->
+                    <!--<paper-input-decorator label="Label" floatingLabel autoValidate>-->
+                        <!--<input is="core-input" required value="">-->
+                    <!--</paper-input-decorator>-->
+                    <!--<cg-input-documents required scrolling="false" dataTagPrefix="test" dataBaseParams="{{defaultParams}}"></cg-input-documents>-->
+                <!--</div>-->
+            <!--</section>-->
+        <!--</section>-->
+        <!--<section>-->
+            <!--<h2>with datasource no data</h2>-->
+            <!--<section>-->
+                <!--<div vertical layout class="party-info-form">-->
+                    <!--<paper-input-decorator label="Label" floatingLabel autoValidate>-->
+                        <!--<input is="core-input" required value="">-->
+                    <!--</paper-input-decorator>-->
+                    <!--<cg-input-documents required scrolling="false" dataTagPrefix="test" dataBaseParams="{{defaultParams2}}"></cg-input-documents>-->
+                <!--</div>-->
+            <!--</section>-->
+        <!--</section>-->
     </div>
 </template>
 
