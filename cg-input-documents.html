@@ -468,13 +468,18 @@
                         return (size / mb).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "mb";
                     }
                 },
+                uploadUrlChanged:function(){
+                    if(this._dropzone) {
+                        this._dropzone.options.url = this.uploadUrl;
+                    }
+                },
                 domReady:function(){
                     if(this.parentElement.tagName.toLowerCase() == "paper-input-decorator") {
                         this._decoratorElement = this.parentElement; // _decoratorElement thing's quite nasty..
                         this.label = this._decoratorElement.getAttribute("label");
                     }
                     this._dropzone = new Dropzone(this.shadowRoot.querySelector("#dragzone"), {
-                        url: this.uploadUrl,
+                        url: this.uploadUrl || "#",
                         autoProcessQueue: this.autoUpload,
                         previewsContainer:false,
                         uploadMultiple:false,
@@ -567,14 +572,19 @@
                 _deleteDoc:function(e){
                     var doc = this._getDocById(e.currentTarget.dataset.docid);
                     if(this.isDataAware()) {
-                        this.fireDataRequest("document-delete", function(response){
-                            this._commitDeleteDoc(doc);
-                            switch(response.transactionType) {
-                                case "delete":
-                                    this.fireApplicationEvent("document-deleted", response.data);
-                                    break;
-                            }
-                        }.bind(this), {document:doc});
+                        this.fireDataRequest({
+                            type:"document-delete",
+                            params:{document:doc},
+                            success:function(response){
+                                this._commitDeleteDoc(doc);
+                                switch(response.transactionType) {
+                                    case "delete":
+                                        this.fireApplicationEvent("document-deleted", response.data);
+                                        break;
+                                }
+                            }.bind(this),
+                            failure:function(response){}.bind(this)
+                        });
                     }else{
                         this._commitDeleteDoc(doc);
                     }
@@ -597,25 +607,39 @@
                         console.log("[cg-input-documents] document is new, waiting for upload to complete before saving.");
                         return;
                     }
-                    this.fireDataRequest("document-save", function(response){
-                        this._replaceDocById(doc._cgId, response.data);
-                        switch(response.transactionType) {
-                            case "create":
-                                this.fireApplicationEvent("document-created", response.data);
-                                break;
-                            case "update":
-                                this.fireApplicationEvent("document-updated", response.data);
-                                break;
-                        }
-                    }.bind(this), {document:doc});
+                    this.fireDataRequest({
+                        type:"document-save",
+                        params:{document:doc},
+                        success:function(response){
+                            response.data.processing = doc.processing;
+                            this._replaceDocById(doc._cgId, response.data);
+                            switch(response.transactionType) { // TODO can be done with doc.handle !- null
+                                case "create":
+                                    this.fireApplicationEvent("document-created", response.data);
+                                    break;
+                                case "update":
+                                    this.fireApplicationEvent("document-updated", response.data);
+                                    break;
+                            }
+                        }.bind(this),
+                        failure:function(response){}.bind(this)
+                    });
                 },
                 onRefreshData:function(){
-                    this.fireDataRequest("document-list", function(response){
-                        this.documents = response.data;
-                    }.bind(this));
-                    this.fireDataRequest("tag-list", function(response){
-                        this.categories = response.data;
-                    }.bind(this));
+                    this.fireDataRequest({
+                        type:"document-list",
+                        success:function(response){
+                            this.documents = response.data;
+                        }.bind(this),
+                        failure:function(response){}.bind(this)
+                    });
+                    this.fireDataRequest({
+                        type:"tag-list",
+                        success:function(response){
+                            this.categories = response.data;
+                        }.bind(this),
+                        failure:function(response){}.bind(this)
+                    });
                 },
                 _onDocAdded:function(file, error){
                     if(error) {
