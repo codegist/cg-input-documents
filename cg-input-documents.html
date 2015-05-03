@@ -438,6 +438,12 @@
                         this._docObservers[key].delete(true);
                         delete this._docObservers[key];
                     }
+                    if(!this.documents) {
+                        this._documentsView.splice(0, this._documentsView.length);
+                        this._deletedDocuments.splice(0, this._deletedDocuments.length);
+                        return true;
+                    }
+
                     for(var i =0; i<this.documents.length;i++){
                         var doc = this.documents[i];
                         doc._cgId = this._id++;
@@ -476,8 +482,6 @@
                     }
                 },
                 domReady:function(){
-                    console.log("[cg-input-document] domReady");
-                    console.log(this);
                     if(this.parentElement.tagName.toLowerCase() == "paper-input-decorator") {
                         this._decoratorElement = this.parentElement; // _decoratorElement thing's quite nasty..
                         this.label = this._decoratorElement.getAttribute("label");
@@ -569,6 +573,13 @@
                     if(this.isDataAware()) {
                         console.log("[cg-input-documents] no documents provided firing data request");
                         this.onRefreshData();
+                        this.fireDataRequest({
+                            type:"doc-tag-list",
+                            success:function(response){
+                                this.categories = response.data;
+                            }.bind(this),
+                            failure:function(response){}.bind(this)
+                        });
                     }else{
                         console.log("[cg-input-documents] documents provided, using them");
                     }
@@ -666,13 +677,6 @@
                         type:"document-list",
                         success:function(response){
                             this.documents = response.data;
-                        }.bind(this),
-                        failure:function(response){}.bind(this)
-                    });
-                    this.fireDataRequest({
-                        type:"doc-tag-list",
-                        success:function(response){
-                            this.categories = response.data;
                         }.bind(this),
                         failure:function(response){}.bind(this)
                     });
