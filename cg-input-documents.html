@@ -8,6 +8,7 @@
 <link href="../core-list/core-list.html" rel="import">
 <link href="../cg-base/cg-base.html" rel="import">
 <link href="../cg-input-tags/cg-input-tags.html" rel="import">
+<link href="../cg-utils/cg-utils.html" rel="import">
 <link href="../font-awesome-polymer-icons/fa-icons.html" rel="import" >
 
 <link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
@@ -391,51 +392,11 @@
                 _displayAdded:function(added){
                     return this._addedFormat.format(added);
                 },
-                _newDocObserver:function(doc, delay){
-                    var observers = [];
-                    var that = this;
-                    for(var i = 0; i < this._docAutoSaveObservedProperties.length;i++){
-                        var prop = this._docAutoSaveObservedProperties[i];
-                        var isArray = Array.isArray(this._docTemplate[prop]);
-                        var obs = isArray ? new ArrayObserver(doc[prop]) : new PathObserver(doc, prop);
-                        obs.open(function(a,b,c){
-                            that._docObservers[doc._cgId].scheduleTask();
-                        });
-                        observers.push(obs);
-                    }
-                    var that = this;
-                    return {
-                        observers:observers,
-                        task:null,
-                        delete:function(runPendingTask){
-                            var hadTask = this.task != null;
-                            hadTask && runPendingTask === true && this.persist();
-                            this.cancelTask();
-                            this.observers.forEach(function(obs){
-                                obs.close();
-                            });
-                        },
-                        cancelTask:function(){
-                            this.task != null && that.cancelAsync(this.task);
-                            this.task = null;
-                        },
-                        persist:function(){
-                            if(this.task == null) return;
-                            this.task = null;
-                            that.onDocumentAutoSave(doc);
-                        },
-                        scheduleTask:function(){
-                            doc._dirty = true;
-                            this.cancelTask();
-                            this.task = that.async(this.persist.bind(this), null, delay);
-                        }
-                    }
-                },
                 documentsChanged:function(oldValue, newValue){
                     var internalChange = (newValue === undefined);
                     this._id = 1;
                     for(var key in this._docObservers){
-                        this._docObservers[key].delete(true);
+                        this._docObservers[key].destroy(true);
                         delete this._docObservers[key];
                     }
                     if(!this.documents) {
@@ -448,7 +409,12 @@
                         var doc = this.documents[i];
                         doc._cgId = this._id++;
                         doc.categories = doc.categories || [];
-                        this._docObservers[doc._cgId] = this._newDocObserver(doc, this._persistDelay);
+                        this._docObservers[doc._cgId] = CGUtils.observe({
+                                                                    observed:doc,
+                                                                    watchedProperties:this._docAutoSaveObservedProperties,
+                                                                    changeCallback:this.onDocumentAutoSave.bind(this),
+                                                                    observedTemplate:this._docTemplate
+                                                                });
                     }
                     this._documentsView = this.documents.slice().sort(function(a,b){
                         if(!a.added || !b.added) {
@@ -613,7 +579,7 @@
                         this._deletedDocuments.push(doc);
                     }
                     if(this._docObservers.hasOwnProperty(doc._cgId)) {
-                        this._docObservers[doc._cgId].delete();
+                        this._docObservers[doc._cgId].destroy();
                         delete this._docObservers[doc._cgId];
                     }
                 },
