@@ -222,7 +222,7 @@
                                     <paper-input flex label="Description" value="{{model.description}}" class="doc-desc"></paper-input>
                                 </div>
                                 <div>
-                                    <core-icon-button class="doc-del" icon="fa:minus-circle" on-tap="{{_deleteDoc}}" data-docid="{{model._cgId}}"></core-icon-button>
+                                    <core-icon-button class="doc-del" icon="fa:minus-circle" on-tap="{{_onDeleteDocument}}" data-docid="{{model._cgId}}"></core-icon-button>
                                 </div>
                             </div>
                             <div>
@@ -344,6 +344,7 @@
                 warningSize:1024*1024*10,
                 refreshOnApplicationEvents:null,
                 documents:null,
+                _deletedDocuments:null,
                 _documentsView:null,
                 _docObservers:null,
                 _docAutoSaveObservedProperties:null,
@@ -368,6 +369,7 @@
                 created:function(){
                     this.super();
                     this.refreshOnApplicationEvents = [];
+                    this._deletedDocuments = [];
                     this.documents = [];
                     this._documentsView = [];
                     this.categories = [];
@@ -420,19 +422,17 @@
                         persist:function(){
                             if(this.task == null) return;
                             this.task = null;
-                            if(!that.autoSave) {
-                                console.log("[cg-input-documents] Autosave disabled, ignoring request");
-                                return;
-                            }
                             that.onDocumentAutoSave(doc);
                         },
                         scheduleTask:function(){
+                            doc._dirty = true;
                             this.cancelTask();
                             this.task = that.async(this.persist.bind(this), null, delay);
                         }
                     }
                 },
-                documentsChanged:function(){
+                documentsChanged:function(oldValue, newValue){
+                    var internalChange = (newValue === undefined);
                     this._id = 1;
                     for(var key in this._docObservers){
                         this._docObservers[key].delete(true);
@@ -452,7 +452,9 @@
                         var bt = b.added.getTime();
                         return at < bt ? 1 : at > bt ? -1 : 0;
                     });
-
+                    if(!internalChange) {
+                        this._deletedDocuments.splice(0, this._deletedDocuments.length);
+                    }
                 },
                 _displayProgress:function(progress) {
                     return Math.round(progress) + "%";
@@ -474,6 +476,8 @@
                     }
                 },
                 domReady:function(){
+                    console.log("[cg-input-document] domReady");
+                    console.log(this);
                     if(this.parentElement.tagName.toLowerCase() == "paper-input-decorator") {
                         this._decoratorElement = this.parentElement; // _decoratorElement thing's quite nasty..
                         this.label = this._decoratorElement.getAttribute("label");
@@ -569,61 +573,93 @@
                         console.log("[cg-input-documents] documents provided, using them");
                     }
                 },
-                _deleteDoc:function(e){
+                _onDeleteDocument:function(e){
                     var doc = this._getDocById(e.currentTarget.dataset.docid);
-                    if(this.isDataAware()) {
+                    this.deleteDocument(doc, this.autoSave);
+                },
+                deleteDocument:function(doc, force){
+                    if(force && this.isDataAware()) {
                         this.fireDataRequest({
                             type:"document-delete",
                             params:{document:doc},
                             success:function(response){
                                 this._commitDeleteDoc(doc);
-                                switch(response.transactionType) {
-                                    case "delete":
-                                        this.fireApplicationEvent("document-deleted", response.data);
+                                this.fireApplicationEvent("document-deleted", response.data);
+                            }.bind(this),
+                            failure:function(response){}.bind(this)
+                        });
+                    }else{
+                        this._commitDeleteDoc(doc, true);
+                    }
+                },
+                _commitDeleteDoc:function(doc, rememberDeleted){
+                    if(doc.handle) {
+                        this._dropzone.removeFile(doc.handle);
+                    }
+                    var index = this.documents.indexOf(doc);
+                    index != -1 && this.documents.splice(this.documents.indexOf(doc), 1);
+                    if(rememberDeleted === true) {
+                        this._deletedDocuments.push(doc);
+                    }
+                    if(this._docObservers.hasOwnProperty(doc._cgId)) {
+                        this._docObservers[doc._cgId].delete();
+                        delete this._docObservers[doc._cgId];
+                    }
+                },
+                onUploadCompleted:function(doc, response){
+                    doc.file = response.file;
+                    doc.hash = response.hash;
+                    doc._dirty = true;
+                    this.onDocumentAutoSave(doc, true);
+                },
+                onDocumentAutoSave:function(doc, force){
+                    if(!this.autoSave) {
+                        console.log("[cg-input-documents] Autosave disabled, ignoring request");
+                        return;
+                    }
+                    if(force !== true && doc.handle) {
+                        console.log("[cg-input-documents] document is new, waiting for upload to complete before saving.");
+                        return;
+                    }
+                    this.saveDocument(doc);
+                },
+                saveDocuments:function(){
+                    this.documents.forEach(function(doc){
+                        this.saveDocument(doc);
+                    }.bind(this));
+                    for(var i = this._deletedDocuments.length - 1; i>=0;i--){
+                        this.deleteDocument(this._deletedDocuments[i], true);
+                        this._deletedDocuments.splice(i, 1);
+                    }
+                },
+                deleteAllDocuments:function(){
+                    this._deletedDocuments = this._deletedDocuments.concat(this.documents);
+                    this.documents.splice(0, this.documents.length);
+                    this.saveDocuments();
+                },
+                saveDocument:function(doc){
+                    if(doc._dirty) {
+                        var transactionType = doc.handle ? "create" : "update";
+                        this.fireDataRequest({
+                            type:"document-save",
+                            params:{document:doc},
+                            success:function(response){
+                                response.data.processing = doc.processing;
+                                this._replaceDocById(doc._cgId, response.data);
+                                switch(transactionType) {
+                                    case "create":
+                                        this.fireApplicationEvent("document-created", response.data);
+                                        break;
+                                    case "update":
+                                        this.fireApplicationEvent("document-updated", response.data);
                                         break;
                                 }
                             }.bind(this),
                             failure:function(response){}.bind(this)
                         });
                     }else{
-                        this._commitDeleteDoc(doc);
+                        console.log("[cg-input-documents] document is unchanged, ingoring save request.");
                     }
-                },
-                _commitDeleteDoc:function(doc){
-                    if(doc.handle) {
-                        this._dropzone.removeFile(doc.handle);
-                    }
-                    this.documents.splice(this.documents.indexOf(doc), 1);
-                    this._docObservers[doc._cgId].delete();
-                    delete this._docObservers[doc._cgId];
-                },
-                onUploadCompleted:function(doc, response){
-                    doc.file = response.file;
-                    doc.hash = response.hash;
-                    this.onDocumentAutoSave(doc, true);
-                },
-                onDocumentAutoSave:function(doc, force){
-                    if(force !== true && doc.handle) {
-                        console.log("[cg-input-documents] document is new, waiting for upload to complete before saving.");
-                        return;
-                    }
-                    this.fireDataRequest({
-                        type:"document-save",
-                        params:{document:doc},
-                        success:function(response){
-                            response.data.processing = doc.processing;
-                            this._replaceDocById(doc._cgId, response.data);
-                            switch(response.transactionType) { // TODO can be done with doc.handle !- null
-                                case "create":
-                                    this.fireApplicationEvent("document-created", response.data);
-                                    break;
-                                case "update":
-                                    this.fireApplicationEvent("document-updated", response.data);
-                                    break;
-                            }
-                        }.bind(this),
-                        failure:function(response){}.bind(this)
-                    });
                 },
                 onRefreshData:function(){
                     this.fireDataRequest({
@@ -634,7 +670,7 @@
                         failure:function(response){}.bind(this)
                     });
                     this.fireDataRequest({
-                        type:"tag-list",
+                        type:"doc-tag-list",
                         success:function(response){
                             this.categories = response.data;
                         }.bind(this),
