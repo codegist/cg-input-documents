@@ -276,12 +276,12 @@
                             <template if="{{documents.length > 0}}">Add documents</template>
                         </span>
                     </paper-button>
-                    <paper-button id="uploadbutton" class="add-doc" on-tap="{{startUpload}}">
-                        <core-icon icon="fa:files-o"></core-icon>
-                        <span>
-                            Upload
-                        </span>
-                    </paper-button>
+                    <!--<paper-button id="uploadbutton" class="add-doc" on-tap="{{startUpload}}">-->
+                        <!--<core-icon icon="fa:files-o"></core-icon>-->
+                        <!--<span>-->
+                            <!--Upload-->
+                        <!--</span>-->
+                    <!--</paper-button>-->
                 </div>
             </div>
             <paper-toast id="messages" on-core-overlay-close-completed="{{_discardMessages}}" duration="{{_messages.length * 3000}}">
