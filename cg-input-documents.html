@@ -129,7 +129,7 @@
                 font-size: 12px;
                 font-weight: bold;
                 padding: 4px;
-                color: rgb(105, 101, 255);
+                color: #6965FF;
                 display: inline-block;
             }
 
@@ -440,6 +440,7 @@
                     }
                 },
                 domReady:function(){
+                    console.log("["+this.constructor.name+"] domReady");
                     if(this.parentElement.tagName.toLowerCase() == "paper-input-decorator") {
                         this._decoratorElement = this.parentElement; // _decoratorElement thing's quite nasty..
                         this.label = this._decoratorElement.getAttribute("label");
