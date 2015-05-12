@@ -364,6 +364,7 @@
                 _decoratorElement:null,
                 _messages:null,
                 _selection:null,
+                _dirty:false,
                 _dropzone:null,
                 _addedFormat : Intl.DateTimeFormat(this.locale, {day:'2-digit', month:'2-digit', year:'numeric'}),
                 _cgFileManager:new CGFileManager(),
@@ -440,7 +441,7 @@
                     }
                 },
                 domReady:function(){
-                    console.log("["+this.constructor.name+"] domReady");
+                    this.super();
                     if(this.parentElement.tagName.toLowerCase() == "paper-input-decorator") {
                         this._decoratorElement = this.parentElement; // _decoratorElement thing's quite nasty..
                         this.label = this._decoratorElement.getAttribute("label");
@@ -714,10 +715,22 @@
                 },
                 onApplicationEvent:function(type, event){
                     if(this.refreshOnApplicationEvents && this.refreshOnApplicationEvents.indexOf(type) != -1) {
-                        console.log("[cg-input-documents] onApplicationEvent(type:'"+type+"') received, trigger data refresh");
-                        this.refresh();
+                        if(this.elementVisible) {
+                            console.log("[cg-input-documents] onApplicationEvent(type:'" + type + "') received, trigger data refresh");
+                            this.refresh();
+                        }else{
+                            console.log("[cg-input-documents] onApplicationEvent(type:'"+type+"'), element is not visible, postpone datarefresh");
+                            this._dirty = true;
+                        }
                     }
-                }
+                },
+                onOwnerVisibilityChanged:function(visible){
+                    if(this._dirty === true && visible === true) {
+                        console.log("[cg-input-documents] onOwnerVisibilityChanged(visible:'"+visible+"') element is marked dirty, refresh data");
+                        this.refresh();
+                        this._dirty = false;
+                    }
+                },
             });
         })()
     </script>
