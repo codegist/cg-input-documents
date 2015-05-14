@@ -14,7 +14,7 @@
 <link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
 <script src="../dropzone/dist/min/dropzone.min.js"></script>
 
-<polymer-element name="cg-input-documents" extends="cg-base" attributes="label documents showAdded showLink linkLabel dataTagPrefix dataBaseParams refreshOnApplicationEvents autoUpload autoSave downloadLink uploadUrl" layout vertical>
+<polymer-element name="cg-input-documents" extends="cg-base" attributes="label nolabel documents showAdded showLink linkLabel dataTagPrefix dataBaseParams refreshOnApplicationEvents autoUpload autoSave downloadLink uploadUrl" layout vertical>
     <template>
         <style>
             cg-input-documents {
@@ -188,9 +188,11 @@
                 padding-bottom:5px;
             }
         </style>
-        <div class="label">
-            {{label}}
-        </div>
+        <template if="{{!nolabel}}">
+            <div class="label">
+                {{label}}
+            </div>
+        </template>
         <div id="dragzone" on-dragover="{{_onDragOver}}" on-dragleave="{{_onDragLeave}}" on-drop="{{_onDrop}}" layout vertical relative>
             <paper-shadow z="1" fit></paper-shadow>
             <input type="file" name="file" is="core-input" required?="{{required}}" hidden id="input" mudltiple="muldtiple" />
@@ -333,6 +335,7 @@
             Polymer("cg-input-documents", {
                 _id:1,
                 uploadUrl:null,
+                nolabel:false,
                 label:"Documents",
                 showAdded:false,
                 showLink:false,
