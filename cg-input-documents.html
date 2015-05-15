@@ -444,6 +444,7 @@
                 },
                 domReady:function(){
                     this.super();
+                    this.uploadUrl = this.globals.uploadUrl || this.uploadUrl;
                     if(this.parentElement.tagName.toLowerCase() == "paper-input-decorator") {
                         this._decoratorElement = this.parentElement; // _decoratorElement thing's quite nasty..
                         this.label = this._decoratorElement.getAttribute("label");
@@ -637,6 +638,9 @@
                         console.log("[cg-input-documents] document is unchanged, ingoring save request.");
                     }
                 },
+                contextChanged:function(){
+                    this.onRefreshData();
+                },
                 onRefreshData:function(){
                     this.fireDataRequest({
                         type:"document-list",
@@ -719,6 +723,9 @@
                     if(this.refreshOnApplicationEvents && this.refreshOnApplicationEvents.indexOf(type) != -1) {
                         console.log("[cg-input-documents] onApplicationEvent(type:'" + type + "') received, trigger data refresh");
                         this.doIfVisible(this.refresh);
+                    }
+                    if(type == "uploadurl-changed") {
+                        this.uploadUrl = event.params.value;
                     }
                 },
             });
