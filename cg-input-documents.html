@@ -9,12 +9,13 @@
 <link href="../cg-base/cg-base.html" rel="import">
 <link href="../cg-input-tags/cg-input-tags.html" rel="import">
 <link href="../cg-utils/cg-utils.html" rel="import">
+<link href="../cg-link/cg-link.html" rel="import">
 <link href="../font-awesome-polymer-icons/fa-icons.html" rel="import" >
 
 <link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
 <script src="../dropzone/dist/min/dropzone.min.js"></script>
 
-<polymer-element name="cg-input-documents" extends="cg-base" attributes="label nolabel documents showAdded showLink linkLabel dataTagPrefix dataBaseParams refreshOnApplicationEvents autoUpload autoSave downloadLink uploadUrl" layout vertical>
+<polymer-element name="cg-input-documents" extends="cg-base" attributes="label nolabel documents showAdded dataTagPrefix dataBaseParams refreshOnApplicationEvents autoUpload autoSave downloadLink uploadUrl" layout vertical>
     <template>
         <style>
             cg-input-documents {
@@ -124,18 +125,6 @@
                 margin-left:5px;
                 margin-right:5px;
             }
-            .doc-link {
-                cursor:pointer;
-                font-size: 12px;
-                font-weight: bold;
-                padding: 4px;
-                color: #6965FF;
-                display: inline-block;
-            }
-
-            .doc-link paper-shadow {
-                border-radius:5px;
-            }
             .doc-added,
             .doc-upload-retry,
             .doc-upload-progress-percent,
@@ -212,11 +201,8 @@
                                         <template if="{{model.size >= warningSize}}">
                                             <core-icon class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></core-icon>
                                         </template>
-                                        <template if="{{showLink == true && model.link}}">
-                                            <div class="doc-link" relative on-tap="{{_onLinkClick}}" data-link="{{model.link}}">
-                                                <paper-shadow z="1" fit></paper-shadow>
-                                                {{linkLabel}}
-                                            </div>
+                                        <template if="{{model.link}}">
+                                            <cg-link class="doc-link" link="{{model.link}}" source="{{self}}"></cg-link>
                                         </template>
                                         <template if="{{model.handle}}">
                                             <span class="doc-new">New</span>
@@ -338,8 +324,6 @@
                 nolabel:false,
                 label:"Documents",
                 showAdded:false,
-                showLink:false,
-                linkLabel:"link",
                 scrolling:true,
                 categories:null,
                 required:false,
@@ -672,9 +656,6 @@
                             handle: file
                         });
                     }
-                },
-                _onLinkClick:function(e){
-                    this.fire("link-clicked", e.currentTarget.dataset.link);
                 },
                 _getDocIndexById:function(id) {
                     if(!this.documents) return -1;
