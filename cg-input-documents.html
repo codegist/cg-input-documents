@@ -15,7 +15,7 @@
 <link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
 <script src="../dropzone/dist/min/dropzone.min.js"></script>
 
-<polymer-element name="cg-input-documents" extends="cg-base" cgName="documents" attributes="label nolabel documents showAdded refreshOnApplicationEvents autoUpload autoSave downloadLink uploadUrl" layout vertical>
+<polymer-element name="cg-input-documents" extends="cg-base" cgName="documents" attributes="label nolabel documents showAdded refreshOnApplicationEvents autoUpload autoSave downloadLink uploadUrl ownedby" layout vertical>
     <template>
         <style>
             cg-input-documents {
@@ -322,6 +322,7 @@
                 _id:1,
                 uploadUrl:null,
                 nolabel:false,
+                ownedby:null,
                 label:"Documents",
                 showAdded:false,
                 scrolling:true,
@@ -628,6 +629,9 @@
                 reload:function(){
                     this.fireDataRequest({
                         type:"data",
+                        params:{
+                            ownedby:this.ownedby
+                        },
                         success:function(response){
                             this.documents = response.data;
                         }.bind(this),
@@ -703,7 +707,7 @@
                 onApplicationEvent:function(type, event){
                     if(this.refreshOnApplicationEvents && this.refreshOnApplicationEvents.indexOf(type) != -1) {
                         console.log("[cg-input-documents] onApplicationEvent(type:'" + type + "') received, trigger data refresh");
-                        this.doIfVisible(this.refresh);
+                        this.refresh();
                     }
                 },
             });
