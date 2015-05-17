@@ -15,7 +15,7 @@
 <link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
 <script src="../dropzone/dist/min/dropzone.min.js"></script>
 
-<polymer-element name="cg-input-documents" extends="cg-base" cgName="documents" attributes="label nolabel documents showAdded dataTagPrefix dataBaseParams refreshOnApplicationEvents autoUpload autoSave downloadLink uploadUrl" layout vertical>
+<polymer-element name="cg-input-documents" extends="cg-base" cgName="documents" attributes="label nolabel documents showAdded refreshOnApplicationEvents autoUpload autoSave downloadLink uploadUrl" layout vertical>
     <template>
         <style>
             cg-input-documents {
@@ -519,7 +519,7 @@
                 refresh:function(){
                     if(this.isDataAware()) {
                         console.log("[cg-input-documents] no documents provided firing data request");
-                        this.onRefreshData();
+                        this.reload();
                         this.fireDataRequest({
                             type:"categories/data",
                             success:function(response){
@@ -619,13 +619,13 @@
                             failure:function(response){}.bind(this)
                         });
                     }else{
-                        console.log("[cg-input-documents] document is unchanged, ingoring save request.");
+                        console.log("[cg-input-documents] document is unchanged, ignoring save request.");
                     }
                 },
                 contextChanged:function(){
-                    this.onRefreshData();
+                    this.reload();
                 },
-                onRefreshData:function(){
+                reload:function(){
                     this.fireDataRequest({
                         type:"data",
                         success:function(response){
