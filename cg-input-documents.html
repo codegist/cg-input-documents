@@ -15,7 +15,7 @@
 <link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
 <script src="../dropzone/dist/min/dropzone.min.js"></script>
 
-<polymer-element name="cg-input-documents" extends="cg-base" attributes="label nolabel documents showAdded dataTagPrefix dataBaseParams refreshOnApplicationEvents autoUpload autoSave downloadLink uploadUrl" layout vertical>
+<polymer-element name="cg-input-documents" extends="cg-base" cgName="documents" attributes="label nolabel documents showAdded dataTagPrefix dataBaseParams refreshOnApplicationEvents autoUpload autoSave downloadLink uploadUrl" layout vertical>
     <template>
         <style>
             cg-input-documents {
@@ -521,7 +521,7 @@
                         console.log("[cg-input-documents] no documents provided firing data request");
                         this.onRefreshData();
                         this.fireDataRequest({
-                            type:"doc-tag-list",
+                            type:"categories/data",
                             success:function(response){
                                 this.categories = response.data;
                             }.bind(this),
@@ -538,7 +538,7 @@
                 deleteDocument:function(doc, force){
                     if(force && this.isDataAware()) {
                         this.fireDataRequest({
-                            type:"document-delete",
+                            type:"document/delete", typePrefix:false,
                             params:{document:doc},
                             success:function(response){
                                 this._commitDeleteDoc(doc);
@@ -602,7 +602,7 @@
                     if(doc._dirty) {
                         var transactionType = doc.handle ? "create" : "update";
                         this.fireDataRequest({
-                            type:"document-save",
+                            type:"document/save", typePrefix:false,
                             params:{document:doc},
                             success:function(response){
                                 response.data.processing = doc.processing;
@@ -627,7 +627,7 @@
                 },
                 onRefreshData:function(){
                     this.fireDataRequest({
-                        type:"document-list",
+                        type:"data",
                         success:function(response){
                             this.documents = response.data;
                         }.bind(this),
@@ -704,9 +704,6 @@
                     if(this.refreshOnApplicationEvents && this.refreshOnApplicationEvents.indexOf(type) != -1) {
                         console.log("[cg-input-documents] onApplicationEvent(type:'" + type + "') received, trigger data refresh");
                         this.doIfVisible(this.refresh);
-                    }
-                    if(type == "uploadurl-changed") {
-                        this.uploadUrl = event.params.value;
                     }
                 },
             });
