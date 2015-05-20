@@ -15,7 +15,7 @@
 <link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
 <script src="../dropzone/dist/min/dropzone.min.js"></script>
 
-<polymer-element name="cg-input-documents" extends="cg-base" cgName="documents" attributes="label nolabel documents showAdded refreshOnApplicationEvents autoUpload autoSave downloadLink uploadUrl" layout vertical>
+<polymer-element name="cg-input-documents" extends="cg-base" cgName="documents" attributes="label nolabel documents showAdded categories refreshOnApplicationEvents autoUpload autoSave downloadLink uploadUrl" layout vertical>
     <template>
         <style>
             cg-input-documents {
@@ -361,7 +361,6 @@
                     this._deletedDocuments = [];
                     this.documents = [];
                     this._documentsView = [];
-                    this.categories = [];
                     this._messages = [];
                     this._docObservers = {};
                     this._docAutoSaveObservedProperties = ["description", "categories"];
@@ -504,7 +503,15 @@
                         }
                         processQueueIfNeeded();
                     }.bind(this));
-
+                    if(this.isDataAware() && this.categories == null) {
+                        this.fireDataRequest({
+                            type:"documents/categories/data", typePrefix:false,
+                            success:function(response){
+                                this.categories = response.data;
+                            }.bind(this),
+                            failure:function(response){}.bind(this)
+                        });
+                    }
                     this.refresh();
                 },
                 _retryUpload:function(e){
@@ -521,13 +528,6 @@
                     if(this.isDataAware()) {
                         console.log("[cg-input-documents] no documents provided firing data request");
                         this.reload();
-                        this.fireDataRequest({
-                            type:"documents/categories/data", typePrefix:false,
-                            success:function(response){
-                                this.categories = response.data;
-                            }.bind(this),
-                            failure:function(response){}.bind(this)
-                        });
                     }else{
                         console.log("[cg-input-documents] documents provided, using them");
                     }
