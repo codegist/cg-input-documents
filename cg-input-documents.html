@@ -176,6 +176,15 @@
                 color:#757575;
                 padding-bottom:5px;
             }
+            :host .counts {
+                margin-top:10px;
+            }
+            :host .result-count {
+                color:#6A6A6A;
+                font-size:12px;
+                margin:0px 5px;
+                text-align: right;
+            }
         </style>
         <template if="{{!nolabel}}">
             <div class="label">
@@ -184,6 +193,9 @@
         </template>
         <div id="dragzone" on-dragover="{{_onDragOver}}" on-dragleave="{{_onDragLeave}}" on-drop="{{_onDrop}}" layout vertical relative>
             <paper-shadow z="1" fit></paper-shadow>
+            <div layout horizontal end-justified class="counts">
+                <span class="result-count">{{documents.length | displayCount}}</span>
+            </div>
             <input type="file" name="file" is="core-input" required?="{{required}}" hidden id="input" mudltiple="muldtiple" />
             <div id="listScroller" hidden?="{{documents.length == 0}}" >
                 <core-list id="list" data="{{_documentsView}}" selectionEnabled="true" selection="{{selection}}" height="80" flex layout scrollTarget="{{$.listScroller}}">
@@ -378,6 +390,9 @@
                 },
                 _displayAdded:function(added){
                     return this._addedFormat.format(added);
+                },
+                displayCount:function(total){
+                    return CGUtils.displayCountFound("document", "documents", total);
                 },
                 documentsChanged:function(oldValue, newValue){
                     var internalChange = (newValue === undefined);
