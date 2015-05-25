@@ -250,7 +250,7 @@
                                                 Server error
                                             </template>
                                         </span>
-                                        <div><core-icon-button class="doc-upload-retry" icon="fa:arrow-circle-o-up" data-docid="{{model._cgId}}" on-tap="{{_retryUpload}}">retry</core-icon-button></div>
+                                        <div><core-icon-button class="doc-upload-retry" icon="fa:repeat" data-docid="{{model._cgId}}" on-tap="{{_retryUpload}}">retry</core-icon-button></div>
                                     </template>
                                     <template if="{{model.processing.finished == true && model.processing.success == true}}">
                                         <core-icon class="doc-upload-success-icon" icon="fa:check-circle-o"></core-icon>
