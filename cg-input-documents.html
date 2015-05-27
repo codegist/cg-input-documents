@@ -213,7 +213,7 @@
                                             <core-icon class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></core-icon>
                                         </template>
                                         <template if="{{model.link}}">
-                                            <cg-link class="doc-link" link="{{model.link}}" source="{{self}}"></cg-link>
+                                            <cg-link class="doc-link" link="{{model.link}}" linkSource="{{model}}" source="{{self}}"></cg-link>
                                         </template>
                                         <template if="{{model.handle}}">
                                             <span class="doc-new">New</span>
