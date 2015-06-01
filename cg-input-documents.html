@@ -391,7 +391,7 @@
                     return this._addedFormat.format(added);
                 },
                 displayCount:function(total){
-                    return CGUtils.displayCountFound("document", "documents", total);
+                    return CG.Utils.displayCountFound("document", "documents", total);
                 },
                 documentsChanged:function(oldValue, newValue){
                     var internalChange = (newValue === undefined);
@@ -410,7 +410,7 @@
                         var doc = this.documents[i];
                         doc._cgId = this._id++;
                         doc.categories = doc.categories || [];
-                        this._docObservers[doc._cgId] = CGUtils.observe({
+                        this._docObservers[doc._cgId] = CG.Utils.observe({
                                                                     observed:doc,
                                                                     watchedProperties:this._docAutoSaveObservedProperties,
                                                                     changeCallback:this.onDocumentAutoSave.bind(this),
@@ -433,7 +433,7 @@
                     return Math.round(progress) + "%";
                 },
                 _displaySize:function(size){
-                    return CGUtils.formatNumber(size, "0.00 b");
+                    return CG.Utils.formatNumber(size, "0.00 b");
                 },
                 uploadUrlChanged:function(){
                     if(this._dropzone) {
