@@ -21,7 +21,7 @@
 <dom-module is="cg-input-documents">
     <style>
         :host {
-            @apply(--paper-font-body1)
+            @apply(--paper-font-body1);
             width:100%;
         }
         .doc-wrapper #listScroller {
@@ -36,7 +36,7 @@
             color:#454545;
         }
 
-        .doc-wrapper .doc-upload-retry iron-icon,
+        .doc-wrapper .doc-upload-retry ::content iron-icon,
         .doc-wrapper .doc-upload-success-icon {
             width:16px;
             height:16px;
@@ -69,7 +69,7 @@
             font-size:13px;
             min-width:200px;
         }
-        .doc-wrapper .doc-desc ::content * {/*TODO CHECK*/
+        .doc-wrapper .doc-desc ::content * {
             padding:0px;
             margin:0px!important;
         }
@@ -80,7 +80,7 @@
             color:#606060;
             font-size:13px;
         }
-        .doc-wrapper .doc-categories .tags .tag { /*TODO CHECK*/
+        .doc-wrapper .doc-categories ::content .tags .tag {
             padding:0px;
             margin:3px;
         }
@@ -170,7 +170,7 @@
             padding:30px;
         }
         .doc-wrapper .drag-empty .big {
-            font-size: 40px;
+            @apply(--paper-font-display2);
             color: #8B8B8B;
             margin:0px;
         }
@@ -251,17 +251,17 @@
                                 <div class="doc-infos">
                                     <div>
                                         <iron-icon class="doc-type" icon="[[_displayMimeIcon(model.type)]]"></iron-icon>
-                                        <span class="doc-added" hidden$="[[!showAdded]]">[[_displayAdded(model.added)]]</span>
+                                        <span class="doc-added" hidden$="[[!showAdded]]">[[_displayAdded(model.updatedAt)]]</span>
                                         <span class="doc-name"><a href$="[[downloadLink(model)]]">[[model.name]]</a></span><!--TODO REMOVE THAT PATH FROM HERE -->
                                         <span class="doc-size">[[_displaySize(model.size)]]</span>
                                         <iron-icon hidden$="[[!isOverSize(model.size, warningSize)]]" class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></iron-icon>
                                         <cg-link hidden$="[[!model.link]]" class="doc-link" link="[[model.link]]" linkSource="[[model]]" source="[[self]]"></cg-link>
-                                        <span hidden$="[[hasHandle(model.handle)]]" class="doc-new">New</span>
+                                        <span hidden$="[[!hasHandle(model.handle)]]" class="doc-new">New</span>
                                     </div>
-                                    <paper-input label="Description" value="{{model.description}}" class="doc-desc"></paper-input>
+                                    <paper-input label="Description" value="{{model.description}}" class="doc-desc" no-label-float="true"></paper-input>
                                 </div>
                                 <div>
-                                    <paper-icon-button class="doc-del" icon="fa:minus-circle" on-tap="_onDeleteDocument" data-docid$="[[model._cgId]]"></paper-icon-button>
+                                    <paper-icon-button class="doc-del" icon="fa:minus-circle" on-tap="_onDeleteDocument"></paper-icon-button>
                                 </div>
                             </div>
                             <div>
@@ -278,7 +278,7 @@
                                         <span class="doc-upload-error-label">Transfer failed:&nbsp;</span>
                                         <span class="doc-upload-error" hidden$="[[!model.processing.canceled]]">cancelled by user</span>
                                         <span class="doc-upload-error" hidden$="[[model.processing.canceled]]">Server error</span>
-                                        <div><paper-icon-button class="doc-upload-retry" icon="fa:repeat" data-docid$="[[model._cgId]]" on-tap="_retryUpload">retry</paper-icon-button></div>
+                                        <div><paper-icon-button class="doc-upload-retry" icon="fa:repeat" on-tap="_retryUpload">retry</paper-icon-button></div>
                                     </template>
                                     <template if="[[isProcessingCompletedSuccessful(model.processing.finished, model.processing.success)]]">
                                         <iron-icon class="doc-upload-success-icon" icon="fa:check-circle-o"></iron-icon>
@@ -290,11 +290,9 @@
                     </template>
                     <div class="spacer"></div>
                 </div>
-                <div class="[[computeDragZoneClass(documents.length)]]">
-                    <template is="dom-if" if="[[!hasDocuments(documents.length)]]">
-                        <p class="big">Drag files here</p>
-                        <p class="big">or</p>
-                    </template>
+                <div class$="[[computeDragZoneClass(documents.length)]]">
+                    <p hidden$="[[hasDocuments(documents.length)]]" class="big">Drag files here</p>
+                    <p hidden$="[[hasDocuments(documents.length)]]" class="big">or</p>
                     <div>
                         <paper-button id="addbutton" class="add-doc">
                             <iron-icon icon="fa:files-o"></iron-icon>
@@ -357,6 +355,7 @@
                 refreshOnApplicationEvents:Array,
                 documents:{
                     type:Array,
+                    value:[],
                     observer:'documentsChanged',
                     notify:true
                 },
@@ -422,7 +421,8 @@
                         type: "",
                         description: "",
                         categories: [],
-                        added: ""
+                        createdAt: new Date(),
+                        updatedAt: new Date()
                     },
                     readOnly:true
                 },
@@ -474,7 +474,7 @@
                 return length * base;
             },
             computeDragZoneClass:function(docCount){
-                return !docCount ?  'drag-empty' : '';
+                return docCount == 0 ?  "drag-empty" : "";
             },
             computeProgressStyle:function(progress){
                 return "width:" + (progress || 0) + "%";
@@ -492,11 +492,11 @@
                 return handle != undefined;
             },
             sortDocs:function(a,b){
-                if(!a.added || !b.added) {
+                if(!a.updatedAt || !b.updatedAt) {
                     return 0;
                 }
-                var at = a.added.getTime();
-                var bt = b.added.getTime();
+                var at = a.updatedAt.getTime();
+                var bt = b.updatedAt.getTime();
                 return at < bt ? 1 : at > bt ? -1 : 0;
             },
             documentsChanged:function(oldValue, newValue){
@@ -537,6 +537,9 @@
                     this._dropzone.options.url = this.uploadUrl;
                 }
             },
+            _setDocumentProperty:function(index, prop, value){
+                this.set("documents." + index + "." + prop, value)
+            },
             ready:function(){
                 this.uploadUrl = this.globals.uploadUrl || this.uploadUrl;
                 this._dropzone = new Dropzone(Polymer.dom(this.root).querySelector("#dragzone"), {
@@ -563,49 +566,56 @@
                 }.bind(this);
 
                 this._dropzone.on("processing", function(file){
-                    this._getDocByHandle(file).processing = {
+                    var doc = this._getDocByHandle(file);
+                    console.log("[cg-input-documents] processing " + doc.model.name);
+                    var processing = {
                         progress:0,
                         bytes:0,
                         finished:false,
-                        success:undefined,
-                        canceled:undefined,
-                        data:undefined
+                        success:null,
+                        canceled:null,
+                        data:null
                     };
+                    this._setDocumentProperty(doc.index, "processing", processing);
+                    for(var prop in processing) {
+                        this.notifyPath("processing." + prop, processing[prop]);
+                    }
                 }.bind(this));
                 this._dropzone.on("uploadprogress", function(file, progress, bytes){
                     var doc = this._getDocByHandle(file);
-                    if(!doc.processing) return;
-                    doc.processing.progress = progress;
-                    doc.processing.bytes = bytes;
-                    console.log("[cg-input-documents] progress of " + doc.name)
+                    if(!doc || !doc.model.processing) return;
+                    this._setDocumentProperty(doc.index, "processing.progress", progress);
+                    this._setDocumentProperty(doc.index, "processing.bytes", bytes);
+                    console.log("[cg-input-documents] uploadprogress " + doc.model.name + " / " + progress);
                 }.bind(this));
                 this._dropzone.on("error", function(file, message, xhr){
                     var doc = this._getDocByHandle(file);
                     if(!doc) return;
-                    if(doc.processing) {
-                        doc.processing.finished = true;
-                        doc.processing.success = false;
-                        doc.processing.data = message;
-                    }
+                    console.log("[cg-input-documents] error " + doc.model.name);
+                    this._setDocumentProperty(doc.index, "processing.finished", true);
+                    this._setDocumentProperty(doc.index, "processing.success", false);
+                    this._setDocumentProperty(doc.index, "processing.data", message);
                     processQueueIfNeeded();
                 }.bind(this));
                 this._dropzone.on("success", function(file, responseText, e){
                     var doc = this._getDocByHandle(file);
+                    console.log("[cg-input-documents] success " + doc.model.name);
                     if(!doc) return;
-                    if(doc.processing) {
-                        doc.processing.finished = true;
-                        doc.processing.success = true;
-                        this.onUploadCompleted(doc, responseText);
+                    if(doc.model.processing) {
+                        this._setDocumentProperty(doc.index, "processing.finished", true);
+                        this._setDocumentProperty(doc.index, "processing.success", true);
+                        this.onUploadCompleted(doc.model, responseText);
                     }
                     processQueueIfNeeded();
                 }.bind(this));
                 this._dropzone.on("canceled", function(file){
                     var doc = this._getDocByHandle(file);
                     if(!doc) return;
-                    if(doc.processing) {
-                        doc.processing.finished = true;
-                        doc.processing.success = false;
-                        doc.processing.canceled = true;
+                    console.log("[cg-input-documents] canceled " + doc.model.name);
+                    if(doc.model.processing) {
+                        this._setDocumentProperty(doc.index, "processing.finished", true);
+                        this._setDocumentProperty(doc.index, "processing.success", false);
+                        this._setDocumentProperty(doc.index, "processing.canceled", true);
                     }
                     processQueueIfNeeded();
                 }.bind(this));
@@ -621,9 +631,8 @@
             },
             _retryUpload:function(e){
                 e.stopPropagation();
-                var docId = e.currentTarget.dataset.docid;
-                var doc = this._getDocById(docId);
-                delete doc.processing;
+                var doc = this._getDocFromEvent(e);
+                this._setDocumentProperty(this.documents.indexOf(doc), "processing", null);
                 this._dropzone.processFile(doc.handle);
             },
             startUpload:function() {
@@ -637,9 +646,11 @@
                     console.log("[cg-input-documents] documents provided, using them");
                 }
             },
+            _getDocFromEvent:function(e){
+                return e.model.get("model");
+            },
             _onDeleteDocument:function(e){
-                var doc = this._getDocById(e.currentTarget.dataset.docid);
-                this.deleteDocument(doc, this.autoSave);
+                this.deleteDocument(this._getDocFromEvent(e), this.autoSave);
             },
             deleteDocument:function(doc, force, completeCallback){
                 if(force && this.isDataAware()) {
@@ -725,6 +736,9 @@
                 this.splice("documents", 0, this.documents.length);
                 this.saveDocuments(completeCallback);
             },
+            replaceDocument:function(index, doc){
+                this.documents[index] = doc;
+            },
             saveDocument:function(doc, completeCallback){
                 if(doc._dirty) {
                     var transactionType = doc.handle ? "create" : "update";
@@ -733,7 +747,7 @@
                         params:{document:doc},
                         success:function(response){
                             response.data.processing = doc.processing;
-                            this._replaceDocById(doc._cgId, response.data);
+                            this.replaceDocument(this.documents.indexOf(doc), response.data);
                             switch(transactionType) {
                                 case "create":
                                     this.fireApplicationEvent("document-created", response.data);
@@ -779,37 +793,23 @@
                 }else {
                     this.push("documents", {
                         name: file.name,
+                        description:"",
                         size: file.size,
                         type: file.type,
-                        added:new Date(),
                         categories:[],
+                        createdAt:new Date(),
+                        updatedAt:new Date(),
                         handle: file
                     });
                 }
             },
-            _getDocIndexById:function(id) {
-                if(!this.documents) return -1;
-                for(var i=0; i<this.documents.length;i++){
-                    if(this.documents[i]._cgId == id) {
-                        return i;
-                    }
-                }
-                return -1;
-            },
-            _replaceDocById:function(id, doc) {
-                var index = this._getDocIndexById(id);
-                if(index != -1) {
-                    this.documents[index] = doc;
-                }
-            },
-            _getDocById:function(id) {
-                var index = this._getDocIndexById(id);
-                return index != -1 ? this.documents[index] : null;
-            },
             _getDocByHandle:function(handle) {
                 for(var i=0; i<this.documents.length;i++){
                     if(this.documents[i].handle == handle) {
-                        return this.documents[i];
+                        return {
+                            index:i,
+                            model:this.documents[i]
+                        };
                     }
                 }
                 return null;
@@ -819,13 +819,6 @@
             },
             _showMessages:function(){
                 this.$.messages.show();
-            },
-            _selectFiles:function(){
-                this.$.input.click();
-            },
-            _neutralizeEvent:function(e){
-                e.stopPropagation();
-                e.preventDefault();
             },
             onApplicationEvent:function(type, event){
                 if(this.refreshOnApplicationEvents && this.refreshOnApplicationEvents.indexOf(type) != -1) {
