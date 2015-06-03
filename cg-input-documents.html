@@ -1,751 +1,834 @@
-<link href="../polymer/polymer.html" rel="import">
-<link href="../paper-shadow/paper-shadow.html" rel="import">
-<link href="../paper-button/paper-button.html" rel="import">
-<link href="../paper-input/paper-input.html" rel="import">
-<link href="../paper-toast/paper-toast.html" rel="import">
-<link href="../core-icon/core-icon.html" rel="import">
-<link href="../core-icon-button/core-icon-button.html" rel="import">
-<link href="../core-list/core-list.html" rel="import">
-<link href="../cg-base/cg-base.html" rel="import">
-<link href="../cg-input-tags/cg-input-tags.html" rel="import">
-<link href="../cg-utils/cg-utils.html" rel="import">
-<link href="../cg-link/cg-link.html" rel="import">
-<link href="../font-awesome-polymer-icons/fa-icons.html" rel="import" >
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-styles/paper-styles.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../cg-base/cg-required-validator.html">
+<link rel="import" href="../cg-base/cg-validatable-behavior.html">
+<link rel="import" href="../paper-material/paper-material.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../cg-base/cg-base-behavior.html">
+<link rel="import" href="../cg-input-tags/cg-input-tags.html">
+<link rel="import" href="../cg-utils/cg-utils.html">
+<link rel="import" href="../cg-link/cg-link.html">
+<link rel="import" href="../font-awesome-polymer-icons/fa-icons.html">
 
-<link href="../dropzone/dist/min/dropzone.min.css" rel="import" >
+<link rel="import" href="../dropzone/dist/min/dropzone.min.css">
 <script src="../dropzone/dist/min/dropzone.min.js"></script>
 
-<polymer-element name="cg-input-documents" extends="cg-base" cgName="documents" attributes="label nolabel documents showAdded categories refreshOnApplicationEvents autoUpload autoSave downloadLink uploadUrl" layout vertical>
+<dom-module is="cg-input-documents">
+    <style>
+        :host {
+            @apply(--paper-font-body1)
+            width:100%;
+        }
+        .doc-wrapper #listScroller {
+            height:250px;
+            overflow:auto;
+            z-index: 0;
+        ;
+        }
+        .doc-wrapper .doc-type {
+            width:16px;
+            height:16px;
+            color:#454545;
+        }
+
+        .doc-wrapper .doc-upload-retry iron-icon,
+        .doc-wrapper .doc-upload-success-icon {
+            width:16px;
+            height:16px;
+            color:#46C82A;
+        }
+        .doc-wrapper .message-icon,
+        .doc-wrapper .doc-upload-error-icon,
+        .doc-wrapper .doc-size-warning {
+            width:16px;
+            height:16px;
+            color:#FFD811;
+        }
+
+
+        .doc-wrapper .doc-upload-retry,
+        .doc-wrapper .doc-del {
+            padding:2px;
+            margin:0px 5px;
+        }
+        .doc-wrapper .doc-del ::content iron-icon {
+            width:16px;
+            height:16px;
+            color:#d34336;
+        }
+
+        .doc-wrapper .doc-desc {
+            padding:3px 0px 0px 0px;
+            margin:0px 0px 5px 0px;
+            color:#606060;
+            font-size:13px;
+            min-width:200px;
+        }
+        .doc-wrapper .doc-desc ::content * {/*TODO CHECK*/
+            padding:0px;
+            margin:0px!important;
+        }
+
+        .doc-wrapper .doc-categories {
+            padding:3px 0px 0px 0px;
+            margin:0px;
+            color:#606060;
+            font-size:13px;
+        }
+        .doc-wrapper .doc-categories .tags .tag { /*TODO CHECK*/
+            padding:0px;
+            margin:3px;
+        }
+        .doc-wrapper .message-icon,
+        .doc-wrapper .message-text,
+        .doc-wrapper .doc-type,
+        .doc-wrapper .doc-name,
+        .doc-wrapper .doc-desc,
+        .doc-wrapper .doc-size-warning,
+        .doc-wrapper .doc-size,
+        .doc-wrapper .doc-link,
+        .doc-wrapper .doc-new{
+            margin-right:10px;
+        }
+        .doc-wrapper .doc-upload-error-icon,
+        .doc-wrapper .doc-upload-success-icon {
+            margin-right:5px;
+        }
+        .doc-wrapper .doc-footer {
+            margin-top:5px;
+            margin-bottom:5px;
+            height:10px;
+        }
+
+        .doc-wrapper .document.transfer-success .doc-upload-progressbar {
+            background-color: #46C82A;
+        }
+
+        .doc-wrapper .document.transfer-error .doc-upload-progressbar {
+            background-color: #d34336;
+        }
+
+        .doc-wrapper .doc-upload-progressbar-wrapper{
+            position:relative;
+            height:10px;
+        }
+        .doc-wrapper .doc-upload-progressbar{
+            position:absolute;
+            height:100%;
+            background-color: #A7ACE5;
+            border-radius: 5px;
+        }
+        .doc-wrapper .doc-upload-progress-percent{
+            width:30px;
+            margin-left:5px;
+            margin-right:5px;
+        }
+        .doc-wrapper .doc-added,
+        .doc-wrapper .doc-upload-retry,
+        .doc-wrapper .doc-upload-progress-percent,
+        .doc-wrapper .doc-upload-error,
+        .doc-wrapper .doc-upload-error-label,
+        .doc-wrapper .doc-upload-success,
+        .doc-wrapper .doc-size {
+            color:#454545;
+            font-size:12px;
+        }
+        .doc-wrapper .doc-upload-error {
+            color:#d34336;
+        }
+        .doc-wrapper .document {
+            padding:10px;
+        }
+        .doc-wrapper .document:hover {
+            /*background-color:#dddddd;*/
+        }
+        .doc-wrapper .document .doc-name:hover {
+            text-decoration: underline;
+            cursor:pointer;
+        }
+        .doc-wrapper .doc-new {
+            color:#ee0000;
+            font-size:12px;
+            font-style:italic;
+        }
+        .doc-wrapper .message {
+            margin-bottom:5px;
+        }
+        .doc-wrapper .add-doc {
+            color: #4285f4;
+        }
+        .doc-wrapper .add-doc span {
+            margin:5px;
+        }
+        .doc-wrapper .drag-empty {
+            text-align: center;
+            padding:30px;
+        }
+        .doc-wrapper .drag-empty .big {
+            font-size: 40px;
+            color: #8B8B8B;
+            margin:0px;
+        }
+        .doc-wrapper .label {
+            font-size: 0.75em;
+            color:#757575;
+            padding-bottom:5px;
+        }
+        .doc-wrapper .counts {
+            margin-top:10px;
+        }
+        .doc-wrapper .result-count {
+            color:#6A6A6A;
+            font-size:12px;
+            margin:0px 5px;
+            text-align: right;
+        }
+        .doc-wrapper {
+            @apply(--layout-vertical);
+        }
+        .doc-wrapper #dragzone {
+            @apply(--layout-vertical);
+            @apply(--layout-relative);
+        }
+        .doc-wrapper #dragzone .panelwrap {
+            @apply(--layout-fit);
+        }
+        .doc-wrapper #dragzone .counts {
+            @apply(--layout-horizontal);
+            @apply(--layout-end-justified);
+        }
+        .doc-wrapper #dragzone .document {
+            @apply(--layout-vertical);
+            z-index: 0;
+        }
+        .doc-wrapper #dragzone .document .doc-wrapper {
+            @apply(--layout-horizontal);
+        }
+        .doc-wrapper #dragzone .document .doc-infos {
+            @apply(--layout-horizontal);
+            @apply(--layout-flex);
+            @apply(--layout-wrap);
+        }
+        .doc-wrapper #dragzone .document .doc-desc {
+            @apply(--layout-flex);
+        }
+        .doc-wrapper #dragzone .document .doc-footer {
+            @apply(--layout-horizontal);
+            @apply(--layout-wrap);
+        }
+        .doc-wrapper #dragzone .doc-upload-progressbar-wrapper {
+            @apply(--layout-flex);
+        }
+        .doc-wrapper .messages {
+            @apply(--layout-vertical);
+        }
+        .doc-wrapper .messages .message {
+            @apply(--layout-horizontal);
+        }
+    </style>
     <template>
-        <style>
-            cg-input-documents {
-                width:100%;
-                font-family: sans-serif;
-            }
-            #listScroller {
-                height:250px;
-                overflow:auto;
-            }
-            .doc-type {
-                width:16px!important;
-                height:16px!important;
-                color:#454545;
-            }
-
-            .doc-upload-retry /deep/ core-icon,
-            .doc-upload-success-icon {
-                width:16px!important;
-                height:16px!important;
-                color:#46C82A;
-            }
-            .message-icon,
-            .doc-upload-error-icon,
-            .doc-size-warning {
-                width:16px!important;
-                height:16px!important;
-                color:#FFD811;
-            }
-
-
-            .doc-upload-retry,
-            .doc-del {
-                padding:2px!important;
-                margin:0px 5px!important;
-            }
-            .doc-del /deep/ core-icon {
-                width:16px!important;
-                height:16px!important;
-                color:#d34336;
-            }
-
-            .doc-desc {
-                padding:3px 0px 0px 0px;
-                margin:0px 0px 5px 0px;
-                color:#606060;
-                font-size:13px;
-                min-width:200px;
-            }
-            .doc-desc /deep/ * {
-                padding:0px;
-                margin:0px!important;
-            }
-
-            .doc-categories {
-                padding:3px 0px 0px 0px;
-                margin:0px;
-                color:#606060;
-                font-size:13px;
-            }
-            .doc-categories /deep/ .tags .tag {
-                padding:0px;
-                margin:3px;
-            }
-            .message-icon,
-            .message-text,
-            .doc-type,
-            .doc-name,
-            .doc-desc,
-            .doc-size-warning,
-            .doc-size,
-            .doc-link,
-            .doc-new{
-                margin-right:10px;
-            }
-            .doc-upload-error-icon,
-            .doc-upload-success-icon {
-                margin-right:5px;
-            }
-            .doc-footer {
-                margin-top:5px;
-                margin-bottom:5px;
-                height:10px;
-            }
-
-            .document.transfer-success .doc-upload-progressbar {
-                background-color: #46C82A;
-            }
-
-            .document.transfer-error .doc-upload-progressbar {
-                background-color: #d34336;
-            }
-
-            .doc-upload-progressbar-wrapper{
-                position:relative;
-                height:10px;
-            }
-            .doc-upload-progressbar{
-                position:absolute;
-                height:100%;
-                background-color: #A7ACE5;
-                border-radius: 5px;
-            }
-            .doc-upload-progress-percent{
-                width:30px;
-                margin-left:5px;
-                margin-right:5px;
-            }
-            .doc-added,
-            .doc-upload-retry,
-            .doc-upload-progress-percent,
-            .doc-upload-error,
-            .doc-upload-error-label,
-            .doc-upload-success,
-            .doc-size {
-                color:#454545;
-                font-size:12px;
-            }
-            .doc-upload-error {
-                color:#d34336;
-            }
-            .document {
-                padding:10px;
-            }
-            .document:hover {
-                /*background-color:#dddddd;*/
-            }
-            .document .doc-name:hover {
-                text-decoration: underline;
-                cursor:pointer;
-            }
-            .doc-new {
-                color:#ee0000;
-                font-size:12px;
-                font-style:italic;
-            }
-            .message {
-                margin-bottom:5px;
-            }
-            .add-doc {
-                color: #4285f4;
-            }
-            .add-doc span {
-                margin:5px;
-            }
-            .drag-empty {
-                text-align: center;
-                padding:30px;
-            }
-            .drag-empty .big {
-                font-size: 40px;
-                color: #8B8B8B;
-                margin:0px;
-            }
-            .label {
-                font-size: 0.75em;
-                color:#757575;
-                padding-bottom:5px;
-            }
-            :host .counts {
-                margin-top:10px;
-            }
-            :host .result-count {
-                color:#6A6A6A;
-                font-size:12px;
-                margin:0px 5px;
-                text-align: right;
-            }
-        </style>
-        <template if="{{!nolabel}}">
-            <div class="label">
-                {{label}}
-            </div>
-        </template>
-        <div id="dragzone" on-dragover="{{_onDragOver}}" on-dragleave="{{_onDragLeave}}" on-drop="{{_onDrop}}" layout vertical relative>
-            <paper-shadow z="1" fit></paper-shadow>
-            <div layout horizontal end-justified class="counts">
-                <span class="result-count">{{documents.length | displayCount}}</span>
-            </div>
-            <input type="file" name="file" is="core-input" required?="{{required}}" hidden id="input" mudltiple="muldtiple" />
-            <div id="listScroller" hidden?="{{documents.length == 0}}" >
-                <core-list id="list" data="{{_documentsView}}" selectionEnabled="true" selection="{{selection}}" height="80" flex layout scrollTarget="{{$.listScroller}}">
-                    <template>
-                        <div class="document {{model.processing.finished == true ? model.processing.success ? 'transfer-success' : 'transfer-error' : ''}}" layout vertical>
-                            <div layout horizontal>
-                                <div flex layout horizontal wrap>
+        <cg-required-validator required="[[required]]"></cg-required-validator>
+        <div class="doc-wrapper">
+            <div class="label" hidden$="[[nolabel]]">[[label]]</div>
+            <div id="dragzone" on-dragover="_onDragOver" on-dragleave="_onDragLeave" on-drop="_onDrop">
+                <paper-material elevation="1" class="panelwrap"></paper-material>
+                <div class="counts">
+                    <span class="result-count">[[displayCount(documents.length)]]</span>
+                </div>
+                <input type="file" name="file" is="iron-input" required$="[[required]]" hidden id="input"/>
+                <div id="listScroller" hidden$="[[!hasDocuments(documents.length)]]" >
+                    <template is="dom-repeat" items="[[documents]]" sort="sortDocs" as="model">
+                        <div class$="[[computeDocumentClasses(model)]]">
+                            <div class="doc-wrapper">
+                                <div class="doc-infos">
                                     <div>
-                                        <core-icon class="doc-type" icon="{{model.type | _displayMimeIcon}}"></core-icon>
-                                        <template if="{{showAdded == true}}">
-                                            <span class="doc-added">{{model.added | _displayAdded}}</span>
-                                        </template>
-                                        <span class="doc-name"><a href="{{downloadLink(model)}}">{{model.name}}</a></span><!--TODO REMOVE THAT PATH FROM HERE -->
-                                        <span class="doc-size">{{model.size | _displaySize}}</span>
-                                        <template if="{{model.size >= warningSize}}">
-                                            <core-icon class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></core-icon>
-                                        </template>
-                                        <template if="{{model.link}}">
-                                            <cg-link class="doc-link" link="{{model.link}}" linkSource="{{model}}" source="{{self}}"></cg-link>
-                                        </template>
-                                        <template if="{{model.handle}}">
-                                            <span class="doc-new">New</span>
-                                        </template>
+                                        <iron-icon class="doc-type" icon="[[_displayMimeIcon(model.type)]]"></iron-icon>
+                                        <span class="doc-added" hidden$="[[!showAdded]]">[[_displayAdded(model.added)]]</span>
+                                        <span class="doc-name"><a href$="[[downloadLink(model)]]">[[model.name]]</a></span><!--TODO REMOVE THAT PATH FROM HERE -->
+                                        <span class="doc-size">[[_displaySize(model.size)]]</span>
+                                        <iron-icon hidden$="[[!isOverSize(model.size, warningSize)]]" class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></iron-icon>
+                                        <cg-link hidden$="[[!model.link]]" class="doc-link" link="[[model.link]]" linkSource="[[model]]" source="[[self]]"></cg-link>
+                                        <span hidden$="[[hasHandle(model.handle)]]" class="doc-new">New</span>
                                     </div>
-                                    <paper-input flex label="Description" value="{{model.description}}" class="doc-desc"></paper-input>
+                                    <paper-input label="Description" value="{{model.description}}" class="doc-desc"></paper-input>
                                 </div>
                                 <div>
-                                    <core-icon-button class="doc-del" icon="fa:minus-circle" on-tap="{{_onDeleteDocument}}" data-docid="{{model._cgId}}"></core-icon-button>
+                                    <paper-icon-button class="doc-del" icon="fa:minus-circle" on-tap="_onDeleteDocument" data-docid$="[[model._cgId]]"></paper-icon-button>
                                 </div>
                             </div>
                             <div>
-                                <cg-input-tags class="doc-categories" tags="{{categories}}" label="Categories" selected="{{model.categories}}"></cg-input-tags>
+                                <cg-input-tags class="doc-categories" tags="[[categories]]" label="Categories" selected="{{model.categories}}"></cg-input-tags>
                             </div>
-                            <div class="doc-footer" layout horizontal wrap>
-                                <template if="{{model.processing}}">
-                                    <!--<template if="{{model.processing.finished == false)}}">-->
-                                        <div flex class="doc-upload-progressbar-wrapper">
-                                            <paper-shadow class="doc-upload-progressbar" z="1" style="width:{{model.processing.progress}}%"></paper-shadow>
-                                            <!--<div ></div>-->
-                                        </div>
-                                        <div class="doc-upload-progress-percent">
-                                            {{model.processing.progress | _displayProgress}}
-                                        </div>
-                                    <!--</template>-->
-                                    <template if="{{model.processing.finished == true && model.processing.success == false}}">
-                                        <core-icon class="doc-upload-error-icon" icon="fa:exclamation-triangle"></core-icon>
+                            <div class="doc-footer">
+                                <template is="dom-if" if="[[model.processing]]">
+                                    <div class="doc-upload-progressbar-wrapper">
+                                        <paper-material class="doc-upload-progressbar" elevation="1" style$="[[computeProgressStyle(model.processing.progress)]]"></paper-material>
+                                    </div>
+                                    <div class="doc-upload-progress-percent">[[_displayProgress(model.processing.progress)]]</div>
+                                    <template is="dom-if" if="[[isProcessingCompletedUnsuccessful(model.processing.finished, model.processing.success)]]">
+                                        <iron-icon class="doc-upload-error-icon" icon="fa:exclamation-triangle"></iron-icon>
                                         <span class="doc-upload-error-label">Transfer failed:&nbsp;</span>
-                                        <span class="doc-upload-error">
-                                            <template if="{{model.processing.canceled == true}}">
-                                                cancelled by user
-                                            </template>
-                                            <template if="{{!model.processing.canceled}}">
-                                                Server error
-                                            </template>
-                                        </span>
-                                        <div><core-icon-button class="doc-upload-retry" icon="fa:repeat" data-docid="{{model._cgId}}" on-tap="{{_retryUpload}}">retry</core-icon-button></div>
+                                        <span class="doc-upload-error" hidden$="[[!model.processing.canceled]]">cancelled by user</span>
+                                        <span class="doc-upload-error" hidden$="[[model.processing.canceled]]">Server error</span>
+                                        <div><paper-icon-button class="doc-upload-retry" icon="fa:repeat" data-docid$="[[model._cgId]]" on-tap="_retryUpload">retry</paper-icon-button></div>
                                     </template>
-                                    <template if="{{model.processing.finished == true && model.processing.success == true}}">
-                                        <core-icon class="doc-upload-success-icon" icon="fa:check-circle-o"></core-icon>
+                                    <template if="[[isProcessingCompletedSuccessful(model.processing.finished, model.processing.success)]]">
+                                        <iron-icon class="doc-upload-success-icon" icon="fa:check-circle-o"></iron-icon>
                                         <span class="doc-upload-success">Document transferred</span>
                                     </template>
                                 </template>
                             </div>
                         </div>
                     </template>
-                </core-list>
-            </div>
-            <div class="{{documents.length == 0 ? 'drag-empty' : ''}}">
-                <template if="{{documents.length == 0}}">
-                    <p class="big">Drag files here</p>
-                    <p class="big">or</p>
-                </template>
-                <div>
-                    <paper-button id="addbutton" class="add-doc">
-                        <core-icon icon="fa:files-o"></core-icon>
-                        <span>
-                            <template if="{{documents.length == 0}}">Select files from your computer</template>
-                            <template if="{{documents.length > 0}}">Add documents</template>
-                        </span>
-                    </paper-button>
-                    <!--<paper-button id="uploadbutton" class="add-doc" on-tap="{{startUpload}}">-->
-                        <!--<core-icon icon="fa:files-o"></core-icon>-->
-                        <!--<span>-->
-                            <!--Upload-->
-                        <!--</span>-->
-                    <!--</paper-button>-->
                 </div>
-            </div>
-            <paper-toast id="messages" on-core-overlay-close-completed="{{_discardMessages}}" duration="{{_messages.length * 3000}}">
-                <div class="messages" layout vertical>
-                    <template repeat="{{_messages as m}}">
-                        <div layout horizontal class="message">
-                            <template if="{{m.icon}}">
-                                <core-icon class="message-icon" icon="{{m.icon}}"></core-icon>
-                            </template>
-                            <span class="message-text">{{m.text}}</span>
-                        </div>
+                <div class="[[computeDragZoneClass(documents.length)]]">
+                    <template is="dom-if" if="[[!hasDocuments(documents.length)]]">
+                        <p class="big">Drag files here</p>
+                        <p class="big">or</p>
                     </template>
+                    <div>
+                        <paper-button id="addbutton" class="add-doc">
+                            <iron-icon icon="fa:files-o"></iron-icon>
+                            <span hidden$="[[!hasDocuments(documents.length)]]">Select files from your computer</span>
+                            <span hidden$="[[hasDocuments(documents.length)]]">Add documents</span>
+                        </paper-button>
+                    </div>
                 </div>
-            </paper-toast>
+                <paper-toast id="messages" on-core-overlay-close-completed="_discardMessages" duration="[[computeToastDuration(_messages.length, 3000)]]">
+                    <div class="messages">
+                        <template is="dom-repeat" items="[[_messages]]" as="m">
+                            <div class="message">
+                                <iron-icon hidden$="[[!m.icon]]" class="message-icon" icon="[[m.icon]]"></iron-icon>
+                                <span class="message-text">[[m.text]]</span>
+                            </div>
+                        </template>
+                    </div>
+                </paper-toast>
+            </div>
         </div>
     </template>
-    <script>
-        (function(){
-            var CGFileManager = function(){
+</dom-module>
+<script>
+    (function(){
+        var CGFileManager = function(){
 
-            };
-            CGFileManager.prototype = {
-                defaultIcon :"fa:file-o",
-                iconsMimeKeyWords :{
-                    "fa:file-pdf-o":["pdf"],
-                    "fa:file-image-o":["image"],
-                    "fa:file-word-o":["word"],
-                    "fa:file-archive-o":["zip", "rar", "compressed"],
-                    "fa:file-text-o":["text"],
-                    "fa:file-video-o":["video"],
-                    "fa:file-audio-o":["audio"],
-                    "fa:file-excel-o":["excel"],
-                    "fa:file-powerpoint-o":["powerpoint"],
-                },
-                getIconForMime:function(mime){
-                    if(mime) {
-                        for (var icon in this.iconsMimeKeyWords) {
-                            var keywords = this.iconsMimeKeyWords[icon];
-                            for (var i = 0; i < keywords.length; i++) {
-                                if (mime.indexOf(keywords[i]) != -1) {
-                                    return icon;
-                                }
+        };
+        CGFileManager.prototype = {
+            defaultIcon :"fa:file-o",
+            iconsMimeKeyWords :{
+                "fa:file-pdf-o":["pdf"],
+                "fa:file-image-o":["image"],
+                "fa:file-word-o":["word"],
+                "fa:file-archive-o":["zip", "rar", "compressed"],
+                "fa:file-text-o":["text"],
+                "fa:file-video-o":["video"],
+                "fa:file-audio-o":["audio"],
+                "fa:file-excel-o":["excel"],
+                "fa:file-powerpoint-o":["powerpoint"],
+            },
+            getIconForMime:function(mime){
+                if(mime) {
+                    for (var icon in this.iconsMimeKeyWords) {
+                        var keywords = this.iconsMimeKeyWords[icon];
+                        for (var i = 0; i < keywords.length; i++) {
+                            if (mime.indexOf(keywords[i]) != -1) {
+                                return icon;
                             }
                         }
                     }
-                    return this.defaultIcon;
                 }
-            };
-            Polymer("cg-input-documents", {
-                _id:1,
-                uploadUrl:null,
-                nolabel:false,
-                ownedby:null,
-                label:"Documents",
-                showAdded:false,
-                scrolling:true,
-                categories:null,
-                required:false,
-                autoUpload:false,
-                autoSave:false,
-                warningSize:1024*1024*10,
-                refreshOnApplicationEvents:null,
-                documents:null,
-                _deletedDocuments:null,
-                _documentsView:null,
-                _docObservers:null,
-                _docAutoSaveObservedProperties:null,
-                _docTemplate : {
-                    name: "",
-                    size: 0,
-                    type: "",
-                    description: "",
-                    categories: [],
-                    eventId: "",
-                    userId: "",
-                    added: new Date()
+                return this.defaultIcon;
+            }
+        };
+        Polymer({
+            is:"cg-input-documents",
+            properties:{
+                uploadUrl:String,
+                categories:Array,
+                refreshOnApplicationEvents:Array,
+                documents:{
+                    type:Array,
+                    observer:'documentsChanged',
+                    notify:true
                 },
-                _persistDelay:5000,
-                _uploadProgress:null,
-                _decoratorElement:null,
-                _messages:null,
-                _selection:null,
-                _dropzone:null,
-                _addedFormat : Intl.DateTimeFormat(this.locale, {day:'2-digit', month:'2-digit', year:'numeric'}),
-                _cgFileManager:new CGFileManager(),
-                created:function(){
-                    this.super();
-                    this.refreshOnApplicationEvents = [];
-                    this._deletedDocuments = [];
-                    this.documents = [];
-                    this._documentsView = [];
-                    this._messages = [];
-                    this._docObservers = {};
-                    this._docAutoSaveObservedProperties = ["description", "categories"];
+                cgName:{
+                    value:"documents"
                 },
-                downloadLink:function(model){
-                    return "#"
+                nolabel:{
+                    type:Boolean,
+                    value:false
                 },
-                autoUploadChanged:function(){
-                    if(this._dropzone) {
-                        this._dropzone.options.autoProcessQueue = this.autoUpload;
-                    }
+                showAdded:{
+                    type:Boolean,
+                    value:false
                 },
-                _displayMimeIcon:function(mime){
-                    return this._cgFileManager.getIconForMime(mime);
+                scrolling:{
+                    type:Boolean,
+                    value:true
                 },
-                _displayAdded:function(added){
-                    return this._addedFormat.format(added);
+                required:{
+                    type:Boolean,
+                    value:false
                 },
-                displayCount:function(total){
-                    return CG.Utils.displayCountFound("document", "documents", total);
+                autoUpload:{
+                    type:Boolean,
+                    value:false,
+                    observer:'autoUploadChanged'
                 },
-                documentsChanged:function(oldValue, newValue){
-                    var internalChange = (newValue === undefined);
-                    this._id = 1;
-                    for(var key in this._docObservers){
-                        this._docObservers[key].destroy(true);
-                        delete this._docObservers[key];
-                    }
-                    if(!this.documents) {
-                        this._documentsView.splice(0, this._documentsView.length);
-                        this._deletedDocuments.splice(0, this._deletedDocuments.length);
-                        return true;
-                    }
+                autoSave:{
+                    type:Boolean,
+                    value:false
+                },
+                warningSize:{
+                    type:Number,
+                    value:1024*1024*10
+                },
+                label:{
+                    type:String,
+                    value:"Documents"
+                },
+                _id:{
+                    type:Number,
+                    value:1
+                },
+                _selection:Object,
+                _dropzone:Object,
+                _deletedDocuments:{
+                    type:Array,
+                    value:[]
+                },
+                _docObservers:{
+                    type:Object,
+                    value:{}
+                },
+                _docAutoSaveObservedProperties:{
+                    type:Array,
+                    value:["description", "categories"]
+                },
+                _docTemplate:{
+                    type:Object,
+                    value:{
+                        name: "",
+                        size: 0,
+                        type: "",
+                        description: "",
+                        categories: [],
+                        added: ""
+                    },
+                    readOnly:true
+                },
+                _messages:{
+                    type:Array,
+                    value:[]
+                },
+                _addedFormat:{
+                    type:Intl.DateTimeFormat,
+                    value:Intl.DateTimeFormat(this.locale, {day:'2-digit', month:'2-digit', year:'numeric'})
+                },
+                _cgFileManager:{
+                    type:CGFileManager,
+                    value:new CGFileManager()
+                },
+                validator:{
+                    type:String,
+                    value:"cg-required-validator"
+                }
+            },
+            behaviors:[CG.BaseBehavior, CG.ValidatableBehavior],
+            observers:[
+                "documentsChanged(documents.*)"
+            ],
+            downloadLink:function(model){
+                return "#"
+            },
+            autoUploadChanged:function(){
+                if(this._dropzone) {
+                    this._dropzone.options.autoProcessQueue = this.autoUpload;
+                }
+            },
+            _displayMimeIcon:function(mime){
+                return this._cgFileManager.getIconForMime(mime);
+            },
+            _displayAdded:function(added){
+                return this._addedFormat.format(added);
+            },
+            displayCount:function(total){
+                return CG.Utils.displayCountFound("document", "documents", total);
+            },
+            hasDocuments:function(length){
+                return length > 0;
+            },
+            computeDocumentClasses:function(model, processingFinished, processingSuccess){
+                return "document " + (processingFinished == true ? processingSuccess ? 'transfer-success' : 'transfer-error' : '');
+            },
+            computeToastDuration:function(length, base){
+                return length * base;
+            },
+            computeDragZoneClass:function(docCount){
+                return !docCount ?  'drag-empty' : '';
+            },
+            computeProgressStyle:function(progress){
+                return "width:" + (progress || 0) + "%";
+            },
+            isProcessingCompletedUnsuccessful:function(finished, success){
+                return finished == true && success == false;
+            },
+            isProcessingCompletedSuccessful:function(finished, success){
+                return finished == true && success == true;
+            },
+            isOverSize:function(size, warning){
+                return size >= warning;
+            },
+            hasHandle:function(handle){
+                return handle != undefined;
+            },
+            sortDocs:function(a,b){
+                if(!a.added || !b.added) {
+                    return 0;
+                }
+                var at = a.added.getTime();
+                var bt = b.added.getTime();
+                return at < bt ? 1 : at > bt ? -1 : 0;
+            },
+            documentsChanged:function(oldValue, newValue){
+                var internalChange = (newValue === undefined);
+                this._id = 1;
+                for(var key in this._docObservers){
+                    this._docObservers[key].destroy(true);
+                    delete this._docObservers[key];
+                }
+                if(!this.documents) {
+                    this._deletedDocuments.splice(0, this._deletedDocuments.length);
+                    return true;
+                }
 
-                    for(var i =0; i<this.documents.length;i++){
-                        var doc = this.documents[i];
-                        doc._cgId = this._id++;
-                        doc.categories = doc.categories || [];
-                        this._docObservers[doc._cgId] = CG.Utils.observe({
-                                                                    observed:doc,
-                                                                    watchedProperties:this._docAutoSaveObservedProperties,
-                                                                    changeCallback:this.onDocumentAutoSave.bind(this),
-                                                                    observedTemplate:this._docTemplate
-                                                                });
-                    }
-                    this._documentsView = this.documents.slice().sort(function(a,b){
-                        if(!a.added || !b.added) {
-                            return 0;
-                        }
-                        var at = a.added.getTime();
-                        var bt = b.added.getTime();
-                        return at < bt ? 1 : at > bt ? -1 : 0;
+                for(var i =0; i<this.documents.length;i++){
+                    var doc = this.documents[i];
+                    doc._cgId = this._id++;
+                    doc.categories = doc.categories || [];
+                    this._docObservers[doc._cgId] = CG.Utils.observe({
+                        observed:doc,
+                        watchedProperties:this._docAutoSaveObservedProperties,
+                        changeCallback:this.onDocumentAutoSave.bind(this),
+                        observedTemplate:this._docTemplate
                     });
-                    if(!internalChange) {
-                        this._deletedDocuments.splice(0, this._deletedDocuments.length);
-                    }
-                },
-                _displayProgress:function(progress) {
-                    return Math.round(progress) + "%";
-                },
-                _displaySize:function(size){
-                    return CG.Utils.formatNumber(size, "0.00 b");
-                },
-                uploadUrlChanged:function(){
-                    if(this._dropzone) {
-                        this._dropzone.options.url = this.uploadUrl;
-                    }
-                },
-                domReady:function(){
-                    this.super();
-                    this.uploadUrl = this.globals.uploadUrl || this.uploadUrl;
-                    if(this.parentElement.tagName.toLowerCase() == "paper-input-decorator") {
-                        this._decoratorElement = this.parentElement; // _decoratorElement thing's quite nasty..
-                        this.label = this._decoratorElement.getAttribute("label");
-                    }
-                    this._dropzone = new Dropzone(this.shadowRoot.querySelector("#dragzone"), {
-                        url: this.uploadUrl || "#",
-                        autoProcessQueue: this.autoUpload,
-                        previewsContainer:false,
-                        uploadMultiple:false,
+                }
+                if(!internalChange) {
+                    this._deletedDocuments.splice(0, this._deletedDocuments.length);
+                }
+            },
+            _displayProgress:function(progress) {
+                return Math.round(progress) + "%";
+            },
+            _displaySize:function(size){
+                return CG.Utils.formatNumber(size, "0.00 b");
+            },
+            uploadUrlChanged:function(){
+                if(this._dropzone) {
+                    this._dropzone.options.url = this.uploadUrl;
+                }
+            },
+            ready:function(){
+                this.uploadUrl = this.globals.uploadUrl || this.uploadUrl;
+                this._dropzone = new Dropzone(Polymer.dom(this.root).querySelector("#dragzone"), {
+                    url: this.uploadUrl || "#",
+                    autoProcessQueue: this.autoUpload,
+                    previewsContainer:false,
+                    uploadMultiple:false,
 //                        maxFilesize:16,
-                        clickable:this.$.addbutton,
-                        dictFileTooBig: "File \"{{filename}}\" is too big ({{filesize}}MiB). Max filesize: {{maxFilesize}}MiB."
-                    });
+                    clickable:this.$.addbutton,
+                    dictFileTooBig: "File \"{{filename}}\" is too big ({{filesize}}MiB). Max filesize: {{maxFilesize}}MiB."
+                });
 //                    this._dropzone.on("uploadprogress", function(file,a,b,c,d) {
-                    this._dropzone.on("addedfile", function(file) {
-                        this._dropzone.accept(file, function(error) {
-                            this._onDocAdded(file, error ? error.replace("{{filename}}", file.name) : error);
-                        }.bind(this));
+                this._dropzone.on("addedfile", function(file) {
+                    this._dropzone.accept(file, function(error) {
+                        this._onDocAdded(file, error ? error.replace("{{filename}}", file.name) : error);
                     }.bind(this));
+                }.bind(this));
 
-                    var processQueueIfNeeded = function() {
-                        if(this._dropzone.options.autoProcessQueue == false && this._dropzone.getQueuedFiles().length > 0) {
-                            this._dropzone.processQueue();
-                        }
-                        //console.log("[cg-input-documents] canceledmultiple\n" + JSON.stringify(arguments, null, "\t"))
-                    }.bind(this);
+                var processQueueIfNeeded = function() {
+                    if(this._dropzone.options.autoProcessQueue == false && this._dropzone.getQueuedFiles().length > 0) {
+                        this._dropzone.processQueue();
+                    }
+                    //console.log("[cg-input-documents] canceledmultiple\n" + JSON.stringify(arguments, null, "\t"))
+                }.bind(this);
 
-                    this._dropzone.on("processing", function(file){
-                        this._getDocByHandle(file).processing = {
-                            progress:0,
-                            bytes:0,
-                            finished:false,
-                            success:undefined,
-                            canceled:undefined,
-                            data:undefined
-                        };
-                    }.bind(this));
-                    this._dropzone.on("uploadprogress", function(file, progress, bytes){
-                        var doc = this._getDocByHandle(file);
-                        if(!doc.processing) return;
-                        doc.processing.progress = progress;
-                        doc.processing.bytes = bytes;
-                        console.log("[cg-input-documents] progress of " + doc.name)
-                    }.bind(this));
-                    this._dropzone.on("error", function(file, message, xhr){
-                        var doc = this._getDocByHandle(file);
-                        if(!doc) return;
-                        if(doc.processing) {
-                            doc.processing.finished = true;
-                            doc.processing.success = false;
-                            doc.processing.data = message;
-                        }
-                        processQueueIfNeeded();
-                    }.bind(this));
-                    this._dropzone.on("success", function(file, responseText, e){
-                        var doc = this._getDocByHandle(file);
-                        if(!doc) return;
-                        if(doc.processing) {
-                            doc.processing.finished = true;
-                            doc.processing.success = true;
-                            this.onUploadCompleted(doc, responseText);
-                        }
-                        processQueueIfNeeded();
-                    }.bind(this));
-                    this._dropzone.on("canceled", function(file){
-                        var doc = this._getDocByHandle(file);
-                        if(!doc) return;
-                        if(doc.processing) {
-                            doc.processing.finished = true;
-                            doc.processing.success = false;
-                            doc.processing.canceled = true;
-                        }
-                        processQueueIfNeeded();
-                    }.bind(this));
-                    if(this.isDataAware() && this.categories == null) {
-                        this.fireDataRequest({
-                            type:"documents/categories/data", typePrefix:false,
-                            success:function(response){
-                                this.categories = response.data;
-                            }.bind(this),
-                            failure:function(response){}.bind(this)
-                        });
-                    }
-                    this.refresh();
-                },
-                _retryUpload:function(e){
-                    e.stopPropagation();
-                    var docId = e.currentTarget.dataset.docid;
-                    var doc = this._getDocById(docId);
-                    delete doc.processing;
-                    this._dropzone.processFile(doc.handle);
-                },
-                startUpload:function() {
-                    this._dropzone.processQueue();
-                },
-                refresh:function(){
-                    if(this.isDataAware()) {
-                        console.log("[cg-input-documents] no documents provided firing data request");
-                        this.reload();
-                    }else{
-                        console.log("[cg-input-documents] documents provided, using them");
-                    }
-                },
-                _onDeleteDocument:function(e){
-                    var doc = this._getDocById(e.currentTarget.dataset.docid);
-                    this.deleteDocument(doc, this.autoSave);
-                },
-                deleteDocument:function(doc, force, completeCallback){
-                    if(force && this.isDataAware()) {
-                        this.fireDataRequest({
-                            type:"document/delete", typePrefix:false,
-                            params:{document:doc},
-                            success:function(response){
-                                this._commitDeleteDoc(doc);
-                                this.fireApplicationEvent("document-deleted", response.data);
-                                completeCallback && completeCallback(response);
-                            }.bind(this),
-                            failure:function(response){
-                                completeCallback && completeCallback(response);
-                            }.bind(this)
-                        });
-                    }else{
-                        this._commitDeleteDoc(doc, true);
-                    }
-                },
-                _commitDeleteDoc:function(doc, rememberDeleted){
-                    if(doc.handle) {
-                        this._dropzone.removeFile(doc.handle);
-                    }
-                    if(!this.documents) {
-                        return;
-                    }
-                    var index = this.documents.indexOf(doc);
-                    index != -1 && this.documents.splice(this.documents.indexOf(doc), 1);
-                    if(rememberDeleted === true) {
-                        this._deletedDocuments.push(doc);
-                    }
-                    if(this._docObservers.hasOwnProperty(doc._cgId)) {
-                        this._docObservers[doc._cgId].destroy();
-                        delete this._docObservers[doc._cgId];
-                    }
-                },
-                onUploadCompleted:function(doc, response){
-                    doc.file = response.file;
-                    doc.hash = response.hash;
-                    doc._dirty = true;
-                    this.onDocumentAutoSave(doc, true);
-                },
-                onDocumentAutoSave:function(doc, force){
-                    if(!this.autoSave) {
-                        console.log("[cg-input-documents] Autosave disabled, ignoring request");
-                        return;
-                    }
-                    if(force !== true && doc.handle) {
-                        console.log("[cg-input-documents] document is new, waiting for upload to complete before saving.");
-                        return;
-                    }
-                    this.saveDocument(doc);
-                },
-                saveDocuments:function(completeCallback){
-
-                    var toSave = this._deletedDocuments.length;
-                    this.documents && this.documents.forEach(function(doc){
-                        if(doc._dirty) {
-                            toSave++;
-                        }
-                    }.bind(this));
-                    if(toSave == 0) {
-                        return completeCallback && completeCallback([]);
-                    }
-
-                    var responses = [];
-                    var callback = function(response){
-                        responses.push(response.data || response);
-                        if(responses.length == toSave) {
-                            completeCallback && completeCallback(responses);
-                        }
+                this._dropzone.on("processing", function(file){
+                    this._getDocByHandle(file).processing = {
+                        progress:0,
+                        bytes:0,
+                        finished:false,
+                        success:undefined,
+                        canceled:undefined,
+                        data:undefined
                     };
-                    this.documents && this.documents.forEach(function(doc){
-                        this.saveDocument(doc, callback);
-                    }.bind(this));
-                    for(var i = this._deletedDocuments.length - 1; i>=0;i--){
-                        this.deleteDocument(this._deletedDocuments[i], true, callback);
-                        this._deletedDocuments.splice(i, 1);
+                }.bind(this));
+                this._dropzone.on("uploadprogress", function(file, progress, bytes){
+                    var doc = this._getDocByHandle(file);
+                    if(!doc.processing) return;
+                    doc.processing.progress = progress;
+                    doc.processing.bytes = bytes;
+                    console.log("[cg-input-documents] progress of " + doc.name)
+                }.bind(this));
+                this._dropzone.on("error", function(file, message, xhr){
+                    var doc = this._getDocByHandle(file);
+                    if(!doc) return;
+                    if(doc.processing) {
+                        doc.processing.finished = true;
+                        doc.processing.success = false;
+                        doc.processing.data = message;
                     }
-                },
-                deleteAllDocuments:function(completeCallback){
-                    this._deletedDocuments = this._deletedDocuments.concat(this.documents);
-                    this.documents.splice(0, this.documents.length);
-                    this.saveDocuments(completeCallback);
-                },
-                saveDocument:function(doc, completeCallback){
-                    if(doc._dirty) {
-                        var transactionType = doc.handle ? "create" : "update";
-                        this.fireDataRequest({
-                            type:"document/save", typePrefix:false,
-                            params:{document:doc},
-                            success:function(response){
-                                response.data.processing = doc.processing;
-                                this._replaceDocById(doc._cgId, response.data);
-                                switch(transactionType) {
-                                    case "create":
-                                        this.fireApplicationEvent("document-created", response.data);
-                                        break;
-                                    case "update":
-                                        this.fireApplicationEvent("document-updated", response.data);
-                                        break;
-                                }
-                                completeCallback && completeCallback(response);
-                            }.bind(this),
-                            failure:function(response){
-                                completeCallback && completeCallback(response);
-                            }.bind(this)
-                        });
-                    }else{
-                        console.log("[cg-input-documents] document is unchanged, ignoring save request.");
+                    processQueueIfNeeded();
+                }.bind(this));
+                this._dropzone.on("success", function(file, responseText, e){
+                    var doc = this._getDocByHandle(file);
+                    if(!doc) return;
+                    if(doc.processing) {
+                        doc.processing.finished = true;
+                        doc.processing.success = true;
+                        this.onUploadCompleted(doc, responseText);
                     }
-                },
-                contextChanged:function(){
-                    this.reload();
-                },
-                reload:function(){
+                    processQueueIfNeeded();
+                }.bind(this));
+                this._dropzone.on("canceled", function(file){
+                    var doc = this._getDocByHandle(file);
+                    if(!doc) return;
+                    if(doc.processing) {
+                        doc.processing.finished = true;
+                        doc.processing.success = false;
+                        doc.processing.canceled = true;
+                    }
+                    processQueueIfNeeded();
+                }.bind(this));
+                if(this.isDataAware() && this.categories == null) {
                     this.fireDataRequest({
-                        type:"data",
+                        type:"documents/categories/data", typePrefix:false,
                         success:function(response){
-                            this.documents = response.data;
+                            this.categories = response.data;
                         }.bind(this),
                         failure:function(response){}.bind(this)
                     });
-                },
-                _onDocAdded:function(file, error){
-                    if(error) {
-                        if (this._async != undefined) {
-                            this.cancelAsync(this._async);
-                        }
-                        this._messages.push({
-                            icon:"fa:exclamation-circle",
-                            text:error
-                        });
-                        this._async = this.async(function () {
-                            this._showMessages();
-                        }.bind(this), null, 10);
-                    }else {
-                        this.documents.splice(0, 0, {
-                            name: file.name,
-                            size: file.size,
-                            type: file.type,
-                            added:new Date(),
-                            categories:[],
-                            handle: file
-                        });
+                }
+            },
+            _retryUpload:function(e){
+                e.stopPropagation();
+                var docId = e.currentTarget.dataset.docid;
+                var doc = this._getDocById(docId);
+                delete doc.processing;
+                this._dropzone.processFile(doc.handle);
+            },
+            startUpload:function() {
+                this._dropzone.processQueue();
+            },
+            refresh:function(){
+                if(this.isDataAware()) {
+                    console.log("[cg-input-documents] no documents provided firing data request");
+                    this.reload();
+                }else{
+                    console.log("[cg-input-documents] documents provided, using them");
+                }
+            },
+            _onDeleteDocument:function(e){
+                var doc = this._getDocById(e.currentTarget.dataset.docid);
+                this.deleteDocument(doc, this.autoSave);
+            },
+            deleteDocument:function(doc, force, completeCallback){
+                if(force && this.isDataAware()) {
+                    this.fireDataRequest({
+                        type:"document/delete", typePrefix:false,
+                        params:{document:doc},
+                        success:function(response){
+                            this._commitDeleteDoc(doc);
+                            this.fireApplicationEvent("document-deleted", response.data);
+                            completeCallback && completeCallback(response);
+                        }.bind(this),
+                        failure:function(response){
+                            completeCallback && completeCallback(response);
+                        }.bind(this)
+                    });
+                }else{
+                    this._commitDeleteDoc(doc, true);
+                }
+            },
+            _commitDeleteDoc:function(doc, rememberDeleted){
+                if(doc.handle) {
+                    this._dropzone.removeFile(doc.handle);
+                }
+                if(!this.documents) {
+                    return;
+                }
+                var index = this.documents.indexOf(doc);
+                index != -1 && this.splice("documents", this.documents.indexOf(doc), 1);
+                if(rememberDeleted === true) {
+                    this._deletedDocuments.push(doc);
+                }
+                if(this._docObservers.hasOwnProperty(doc._cgId)) {
+                    this._docObservers[doc._cgId].destroy();
+                    delete this._docObservers[doc._cgId];
+                }
+            },
+            onUploadCompleted:function(doc, response){
+                doc.file = response.file;
+                doc.hash = response.hash;
+                doc._dirty = true;
+                this.onDocumentAutoSave(doc, true);
+            },
+            onDocumentAutoSave:function(doc, force){
+                if(!this.autoSave) {
+                    console.log("[cg-input-documents] Autosave disabled, ignoring request");
+                    return;
+                }
+                if(force !== true && doc.handle) {
+                    console.log("[cg-input-documents] document is new, waiting for upload to complete before saving.");
+                    return;
+                }
+                this.saveDocument(doc);
+            },
+            saveDocuments:function(completeCallback){
+
+                var toSave = this._deletedDocuments.length;
+                this.documents && this.documents.forEach(function(doc){
+                    if(doc._dirty) {
+                        toSave++;
                     }
-                },
-                _getDocIndexById:function(id) {
-                    if(!this.documents) return -1;
-                    for(var i=0; i<this.documents.length;i++){
-                        if(this.documents[i]._cgId == id) {
-                            return i;
-                        }
+                }.bind(this));
+                if(toSave == 0) {
+                    return completeCallback && completeCallback([]);
+                }
+
+                var responses = [];
+                var callback = function(response){
+                    responses.push(response.data || response);
+                    if(responses.length == toSave) {
+                        completeCallback && completeCallback(responses);
                     }
-                    return -1;
-                },
-                _replaceDocById:function(id, doc) {
-                    var index = this._getDocIndexById(id);
-                    if(index != -1) {
-                        this.documents[index] = doc;
+                };
+                this.documents && this.documents.forEach(function(doc){
+                    this.saveDocument(doc, callback);
+                }.bind(this));
+                for(var i = this._deletedDocuments.length - 1; i>=0;i--){
+                    this.deleteDocument(this._deletedDocuments[i], true, callback);
+                    this._deletedDocuments.splice(i, 1);
+                }
+            },
+            deleteAllDocuments:function(completeCallback){
+                this._deletedDocuments = this._deletedDocuments.concat(this.documents);
+                this.splice("documents", 0, this.documents.length);
+                this.saveDocuments(completeCallback);
+            },
+            saveDocument:function(doc, completeCallback){
+                if(doc._dirty) {
+                    var transactionType = doc.handle ? "create" : "update";
+                    this.fireDataRequest({
+                        type:"document/save", typePrefix:false,
+                        params:{document:doc},
+                        success:function(response){
+                            response.data.processing = doc.processing;
+                            this._replaceDocById(doc._cgId, response.data);
+                            switch(transactionType) {
+                                case "create":
+                                    this.fireApplicationEvent("document-created", response.data);
+                                    break;
+                                case "update":
+                                    this.fireApplicationEvent("document-updated", response.data);
+                                    break;
+                            }
+                            completeCallback && completeCallback(response);
+                        }.bind(this),
+                        failure:function(response){
+                            completeCallback && completeCallback(response);
+                        }.bind(this)
+                    });
+                }else{
+                    console.log("[cg-input-documents] document is unchanged, ignoring save request.");
+                }
+            },
+            contextChanged:function(){
+                this.reload();
+            },
+            reload:function(){
+                this.fireDataRequest({
+                    type:"data",
+                    success:function(response){
+                        this.documents = response.data;
+                    }.bind(this),
+                    failure:function(response){}.bind(this)
+                });
+            },
+            _onDocAdded:function(file, error){
+                if(error) {
+                    if (this._async != undefined) {
+                        this.cancelAsync(this._async);
                     }
-                },
-                _getDocById:function(id) {
-                    var index = this._getDocIndexById(id);
-                    return index != -1 ? this.documents[index] : null;
-                },
-                _getDocByHandle:function(handle) {
-                    for(var i=0; i<this.documents.length;i++){
-                        if(this.documents[i].handle == handle) {
-                            return this.documents[i];
-                        }
+                    this._messages.push({
+                        icon:"fa:exclamation-circle",
+                        text:error
+                    });
+                    this._async = this.async(function () {
+                        this._showMessages();
+                    }.bind(this), null, 10);
+                }else {
+                    this.push("documents", {
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        added:new Date(),
+                        categories:[],
+                        handle: file
+                    });
+                }
+            },
+            _getDocIndexById:function(id) {
+                if(!this.documents) return -1;
+                for(var i=0; i<this.documents.length;i++){
+                    if(this.documents[i]._cgId == id) {
+                        return i;
                     }
-                    return null;
-                },
-                _discardMessages:function(){
-                    this._messages = [];
-                },
-                _showMessages:function(){
-                    this.$.messages.show();
-                },
-                _selectFiles:function(){
-                    this.$.input.click();
-                },
-                _selectionChange:function(e){
-                    console.log("[cg-input-documents] _selectionChange: " + JSON.stringify(this._selection));
-                },
-                _neutralizeEvent:function(e){
-                    e.stopPropagation();
-                    e.preventDefault();
-                },
-                onApplicationEvent:function(type, event){
-                    if(this.refreshOnApplicationEvents && this.refreshOnApplicationEvents.indexOf(type) != -1) {
-                        console.log("[cg-input-documents] onApplicationEvent(type:'" + type + "') received, trigger data refresh");
-                        this.refresh();
+                }
+                return -1;
+            },
+            _replaceDocById:function(id, doc) {
+                var index = this._getDocIndexById(id);
+                if(index != -1) {
+                    this.documents[index] = doc;
+                }
+            },
+            _getDocById:function(id) {
+                var index = this._getDocIndexById(id);
+                return index != -1 ? this.documents[index] : null;
+            },
+            _getDocByHandle:function(handle) {
+                for(var i=0; i<this.documents.length;i++){
+                    if(this.documents[i].handle == handle) {
+                        return this.documents[i];
                     }
-                },
-            });
-        })()
-    </script>
-</polymer-element>
+                }
+                return null;
+            },
+            _discardMessages:function(){
+                this._messages = [];
+            },
+            _showMessages:function(){
+                this.$.messages.show();
+            },
+            _selectFiles:function(){
+                this.$.input.click();
+            },
+            _neutralizeEvent:function(e){
+                e.stopPropagation();
+                e.preventDefault();
+            },
+            onApplicationEvent:function(type, event){
+                if(this.refreshOnApplicationEvents && this.refreshOnApplicationEvents.indexOf(type) != -1) {
+                    console.log("[cg-input-documents] onApplicationEvent(type:'" + type + "') received, trigger data refresh");
+                    this.refresh();
+                }
+            },
+        });
+    })()
+</script>

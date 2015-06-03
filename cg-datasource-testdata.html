@@ -1,68 +1,104 @@
 <link href="../polymer/polymer.html" rel="import">
-<link href="../cg-datasource/cg-datasource-base.html" rel="import">
+<link href="../cg-datasource/cg-datasource-base-behavior.html" rel="import">
+<link href="../cg-base/cg-base-behavior.html" rel="import">
 
-<polymer-element name="cg-datasource-testdata" extends="cg-datasource-base">
-    <script>
-        (function() {
-            var documents = [{
-                "name": "c29bf435b98b.jpg",
-                "size": 359551,
-                "type": "image/jpeg",
-                "description":"Sed id lacus vitae tortor convallis rhoncus a non ipsum.",
-                "added":new Date("2015-01-18T09:00:00.000-0500"),
-                "link":23
-            }, {
-                "name": "docs.zip",
-                "size": 1607693765,
-                "type": "application/zip",
-                "description":"Sed tempus magna et ligula imperdiet gravida. Proin semper augue justo, sit amet dictum erat porttitor vitae.",
-                "added":new Date("2015-01-18T09:00:00.000-0500")
-            }, {
-                "name": "eclipse-java-luna-SR1-linux-gtk-x86_64.tar.gz",
-                "size": 160242552,
-                "type": "application/gzip",
-                "added":new Date("2015-02-01T09:00:00.000-0500"),
-                "link":56
-            }, {
-                "name": "jdk-8u25-linux-x64.gz",
+<dom-module id="cg-datasource-testdata">
+</dom-module>
+<script>
+    var db = {
+        categories: {
+            "success": true,
+            "status": 200,
+            "data": ["Bill", "Bitewing view", "Cephalometric projections", "Cone Beam CT", "Dental computed tomography (CT)", "Digital imaging", "Extraoral x-rays", "Full mouth series", "Intraoral x-rays", "MRI imaging", "Occlusal view", "Orthopantomogram", "Panoramic films", "Panoramic x-rays", "Periapical view", "Radiography", "Tomograms", "X-ray"]
+        }, documents: {
+            "success": true,
+            "status": 200,
+            "data": [{
+                "name": "stock-vector-natural-grass-and-ground-seamless-borders-set-of-vector-cartoon-illustrations-of-grass-field-71024461.jpg",
                 "size": 160872482,
-                "type": "application/gzip",
-                "added":new Date("2015-02-18T09:00:00.000-0500")
-            }, {
-                "name": "salamander",
-                "size": 63,
-                "type": "",
-                "description":"Proin semper augue justo, sit amet dictum erat porttitor vitae.",
-                "added":new Date("2015-03-20T09:00:00.000-0500"),
-                "link":34
+                "type": "application/word",
+                "description": "Sed id lacus vitae tortor convallis rhoncus a non ipsum.",
+                "updatedAt": new Date("2012-09-28T20:37:22.931Z"),
+                "createdAt": new Date("2012-02-21T22:16:06.236Z"),
+                "added": new Date("2005-07-28T15:26:00.000Z"),
+                "categories": ["Panoramic x-rays", "Tomograms", "X-ray", "Panoramic films"]
             }, {
                 "name": "singlepath.svg",
-                "size": 47770,
-                "type": "image/svg+xml",
-                "description":"Sed id lacus vitae tortor convallis rhoncus a non ipsum.",
-                "added":new Date("2015-03-11T09:00:00.000-0500")
+                "size": 160242552,
+                "type": "image/jpeg",
+                "description": "Sed tempus magna et ligula imperdiet gravida.",
+                "updatedAt": new Date("2013-10-24T23:53:03.173Z"),
+                "createdAt": new Date("2012-02-22T00:03:24.490Z"),
+                "added": new Date("2001-11-06T18:47:00.000Z"),
+                "categories": ["Periapical view"]
             }, {
-                "name": "stock-vector-natural-grass-and-gr.jpg",
+                "name": "eclipse-java-luna-SR1-linux-gtk-x86_64.tar.gz",
+                "size": 63,
+                "type": "plain/text",
+                "description": "Sed tempus magna et ligula imperdiet gravida.",
+                "updatedAt": new Date("2012-10-25T09:50:31.111Z"),
+                "createdAt": new Date("2012-02-22T00:51:01.898Z"),
+                "added": new Date("2011-11-03T21:37:00.000Z"),
+                "categories": ["Bitewing view", "Periapical view", "Extraoral x-rays", "Cephalometric projections", "X-ray", "Full mouth series", "Radiography", "Panoramic x-rays"]
+            }, {
+                "name": "eclipse-java-luna-SR1-linux-gtk-x86_64.tar.gz",
+                "size": 359551,
+                "type": "application/zip",
+                "description": "Sed id lacus vitae tortor convallis rhoncus a non ipsum.",
+                "updatedAt": new Date("2012-03-29T02:49:32.418Z"),
+                "createdAt": new Date("2012-02-19T10:51:00.366Z"),
+                "added": new Date("2012-11-11T11:46:00.000Z"),
+                "categories": [],
+                "link": {"id": "5567eacee22163d20fb63c53", "type": "event", "display": "event"}
+            }, {
+                "name": "salamander",
+                "size": 359551,
+                "type": "application/excel",
+                "description": "Sed tempus magna et ligula imperdiet gravida.",
+                "updatedAt": new Date("2012-12-31T00:26:04.088Z"),
+                "createdAt": new Date("2012-04-11T12:39:26.150Z"),
+                "added": new Date("2013-04-12T19:32:00.000Z"),
+                "categories": [],
+                "link": {"id": "5567eacee22163d20fb63d14", "type": "event", "display": "event"}
+            }, {
+                "name": "eclipse-java-luna-SR1-linux-gtk-x86_64.tar.gz",
                 "size": 71119,
                 "type": "image/jpeg",
-                "description":"Sed tempus magna et ligula imperdiet gravida.",
-                "added":new Date("2015-03-14T09:00:00.000-0500"),
-                "link":56
-            }];
-            Polymer({
-                getProvidersMap:function(){
+                "description": "Sed id lacus vitae tortor convallis rhoncus a non ipsum.",
+                "updatedAt": new Date("2012-08-22T22:46:55.777Z"),
+                "createdAt": new Date("2012-05-07T09:54:18.287Z"),
+                "added": new Date("2007-11-30T10:09:00.000Z"),
+                "categories": ["MRI imaging", "Bitewing view", "Dental computed tomography (CT)", "Digital imaging", "Full mouth series"],
+                "link": {"id": "5567eacee22163d20fb63d80", "type": "event", "display": "event"}
+            }]
+        }
+    };
+
+    Polymer({
+        is: 'cg-datasource-testdata',
+        properties: {
+            providersMap: {
+                type: Function,
+                value: function () {
                     return {
-                        'test-document-list':this.getDocuments
+                        'documents/data': this.documents,
+                        'documents/categories/data': this.categories
                     };
-                },
-                getDocuments:function(callback, params){
-                    console.log("### Datasource[TestData] getUserDocuments(params:"+JSON.stringify(params)+")");
-                    return callback({
-                        success:true,
-                        data:params.eventId == 1 ? documents : [],
-                    });
-                },
-            });
-        })();
-    </script>
-</polymer-element>
+                }
+            }
+        },
+        behaviors: [CG.DataSourceBaseBehavior],
+        ready: function () {
+            this.globals.dataAware = true;
+        },
+        documents: function (options) {
+            console.log("### Datasource[TestData] documents(params:" + JSON.stringify(options.params) + ")");
+            return options.success(db.documents);
+        },
+        categories: function (options) {
+            console.log("### Datasource[TestData] categories(params:" + JSON.stringify(options.params) + ")");
+            return options.success(db.categories);
+        }
+    });
+</script>
+
