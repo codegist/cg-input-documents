@@ -76,6 +76,7 @@
                     return {
                         'documents/data': this.documents,
                         'document/save': this.save,
+                        'document/delete': this.delete,
                         'documents/categories/data': this.categories
                     };
                 }
@@ -105,6 +106,14 @@
             console.log("### Datasource[TestData] save(params:" + JSON.stringify(options.params) + ")");
             delete options.params.document.handle;
             delete options.params.document._dirty;
+            return options.success({
+                "success": true,
+                "status": 200,
+                "data":options.params.document
+            });
+        },
+        "delete": function (options) {
+            console.log("### Datasource[TestData] delete(params:" + JSON.stringify(options.params) + ")");
             return options.success({
                 "success": true,
                 "status": 200,

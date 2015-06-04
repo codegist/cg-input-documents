@@ -4,12 +4,12 @@
 <link rel="import" href="../cg-base/cg-required-validator.html">
 <link rel="import" href="../cg-base/cg-validatable-behavior.html">
 <link rel="import" href="../paper-material/paper-material.html">
+<link rel="import" href="../cg-base/cg-base-behavior.html">
 <link rel="import" href="../paper-button/paper-button.html">
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-toast/paper-toast.html">
 <link rel="import" href="../iron-icon/iron-icon.html">
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../cg-base/cg-base-behavior.html">
 <link rel="import" href="../cg-input-tags/cg-input-tags.html">
 <link rel="import" href="../cg-utils/cg-utils.html">
 <link rel="import" href="../cg-link/cg-link.html">
@@ -105,11 +105,11 @@
             height:10px;
         }
 
-        .doc-wrapper .document.transfer-success .doc-upload-progressbar {
+        .doc-wrapper .transfer-success .doc-upload-progressbar {
             background-color: #46C82A;
         }
 
-        .doc-wrapper .document.transfer-error .doc-upload-progressbar {
+        .doc-wrapper .transfer-error .doc-upload-progressbar {
             background-color: #d34336;
         }
 
@@ -227,6 +227,9 @@
         .doc-wrapper #dragzone .doc-upload-progressbar-wrapper {
             @apply(--layout-flex);
         }
+        .doc-wrapper #dragzone .doc-upload-error-wrapper {
+            @apply(--layout-horizontal);
+        }
         .doc-wrapper .messages {
             @apply(--layout-vertical);
         }
@@ -244,60 +247,58 @@
                     <span class="result-count">[[displayCount(documents.length)]]</span>
                 </div>
                 <input type="file" name="file" is="iron-input" required$="[[required]]" hidden id="input"/>
-                <div id="listScroller" hidden$="[[!hasDocuments(documents.length)]]" >
-                    <template is="dom-repeat" items="[[documents]]" sort="sortDocs" as="model">
-                        <div class$="[[computeDocumentClasses(model)]]">
+                <div id="listScroller" hidden$="[[!hasLength(documents.length)]]" >
+                    <template is="dom-repeat" items="[[documents]]" sort="sortDocs">
+                        <div class="document">
                             <div class="doc-wrapper">
                                 <div class="doc-infos">
                                     <div>
-                                        <iron-icon class="doc-type" icon="[[_displayMimeIcon(model.type)]]"></iron-icon>
-                                        <span class="doc-added" hidden$="[[!showAdded]]">[[_displayAdded(model.updatedAt)]]</span>
-                                        <span class="doc-name"><a href$="[[downloadLink(model)]]">[[model.name]]</a></span><!--TODO REMOVE THAT PATH FROM HERE -->
-                                        <span class="doc-size">[[_displaySize(model.size)]]</span>
-                                        <iron-icon hidden$="[[!isOverSize(model.size, warningSize)]]" class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></iron-icon>
-                                        <cg-link hidden$="[[!model.link]]" class="doc-link" link="[[model.link]]" linkSource="[[model]]" source="[[self]]"></cg-link>
-                                        <span hidden$="[[!hasHandle(model.handle)]]" class="doc-new">New</span>
+                                        <iron-icon class="doc-type" icon="[[_displayMimeIcon(item.type)]]"></iron-icon>
+                                        <span class="doc-added" hidden$="[[!showAdded]]">[[_displayAdded(item.updatedAt)]]</span>
+                                        <span class="doc-name"><a href$="[[downloadLink(item)]]">[[item.name]]</a></span><!--TODO REMOVE THAT PATH FROM HERE -->
+                                        <span class="doc-size">[[_displaySize(item.size)]]</span>
+                                        <iron-icon hidden$="[[!ifGreaterThan(item.size, warningSize)]]" class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></iron-icon>
+                                        <cg-link hidden$="[[!item.link]]" class="doc-link" link="[[item.link]]" linkSource="[[item]]" source="[[self]]"></cg-link>
+                                        <span hidden$="[[isDefined(item.handle)]]" class="doc-new">New</span>
                                     </div>
-                                    <paper-input label="Description" value="{{model.description}}" class="doc-desc" no-label-float="true"></paper-input>
+                                    <paper-input label="Description" value="{{item.description}}" class="doc-desc" no-label-float="true"></paper-input>
                                 </div>
                                 <div>
                                     <paper-icon-button class="doc-del" icon="fa:minus-circle" on-tap="_onDeleteDocument"></paper-icon-button>
                                 </div>
                             </div>
                             <div>
-                                <cg-input-tags class="doc-categories" tags="[[categories]]" label="Categories" selected="{{model.categories}}"></cg-input-tags>
+                                <cg-input-tags class="doc-categories" tags="[[categories]]" label="Categories" selected="{{item.categories}}"></cg-input-tags>
                             </div>
-                            <div class="doc-footer">
-                                <template is="dom-if" if="[[model.processing]]">
-                                    <div class="doc-upload-progressbar-wrapper">
-                                        <paper-material class="doc-upload-progressbar" elevation="1" style$="[[computeProgressStyle(model.processing.progress)]]"></paper-material>
-                                    </div>
-                                    <div class="doc-upload-progress-percent">[[_displayProgress(model.processing.progress)]]</div>
-                                    <template is="dom-if" if="[[isProcessingCompletedUnsuccessful(model.processing.finished, model.processing.success)]]">
-                                        <iron-icon class="doc-upload-error-icon" icon="fa:exclamation-triangle"></iron-icon>
-                                        <span class="doc-upload-error-label">Transfer failed:&nbsp;</span>
-                                        <span class="doc-upload-error" hidden$="[[!model.processing.canceled]]">cancelled by user</span>
-                                        <span class="doc-upload-error" hidden$="[[model.processing.canceled]]">Server error</span>
-                                        <div><paper-icon-button class="doc-upload-retry" icon="fa:repeat" on-tap="_retryUpload">retry</paper-icon-button></div>
-                                    </template>
-                                    <template if="[[isProcessingCompletedSuccessful(model.processing.finished, model.processing.success)]]">
-                                        <iron-icon class="doc-upload-success-icon" icon="fa:check-circle-o"></iron-icon>
-                                        <span class="doc-upload-success">Document transferred</span>
-                                    </template>
-                                </template>
+                            <div hidden$="[[!item.processing.progress]]" class$="[[computeProgressClass(item.processing.finished,item.processing.success)]]">
+                                <div class="doc-upload-progressbar-wrapper">
+                                    <paper-material class="doc-upload-progressbar" elevation="1" style$="[[concat('width:', item.processing.progress, '%;')]]"></paper-material>
+                                </div>
+                                <div class="doc-upload-progress-percent">[[_displayProgress(item.processing.progress)]]</div>
+                                <div class="doc-upload-error-wrapper" hidden$="[[!isProcessingCompletedUnsuccessful(item.processing.finished, item.processing.success)]]">
+                                    <iron-icon class="doc-upload-error-icon" icon="fa:exclamation-triangle"></iron-icon>
+                                    <span class="doc-upload-error-label">Transfer failed:&nbsp;</span>
+                                    <span class="doc-upload-error" hidden$="[[!item.processing.canceled]]">cancelled by user</span>
+                                    <span class="doc-upload-error" hidden$="[[item.processing.canceled]]">Server error</span>
+                                    <div><paper-icon-button class="doc-upload-retry" icon="fa:repeat" on-tap="_retryUpload">retry</paper-icon-button></div>
+                                </div>
+                                <div hidden$="[[!and(item.processing.finished, item.processing.success)]]">
+                                    <iron-icon class="doc-upload-success-icon" icon="fa:check-circle-o"></iron-icon>
+                                    <span class="doc-upload-success">Document transferred</span>
+                                </div>
                             </div>
                         </div>
                     </template>
                     <div class="spacer"></div>
                 </div>
-                <div class$="[[computeDragZoneClass(documents.length)]]">
-                    <p hidden$="[[hasDocuments(documents.length)]]" class="big">Drag files here</p>
-                    <p hidden$="[[hasDocuments(documents.length)]]" class="big">or</p>
+                <div class$="[[ifEqualsTo(documents.length, 0, 'drag-empty', '')]]">
+                    <p hidden$="[[hasLength(documents.length)]]" class="big">Drag files here</p>
+                    <p hidden$="[[hasLength(documents.length)]]" class="big">or</p>
                     <div>
                         <paper-button id="addbutton" class="add-doc">
                             <iron-icon icon="fa:files-o"></iron-icon>
-                            <span hidden$="[[!hasDocuments(documents.length)]]">Select files from your computer</span>
-                            <span hidden$="[[hasDocuments(documents.length)]]">Add documents</span>
+                            <span hidden$="[[!hasLength(documents.length)]]">Select files from your computer</span>
+                            <span hidden$="[[hasLength(documents.length)]]">Add documents</span>
                         </paper-button>
                     </div>
                 </div>
@@ -462,34 +463,16 @@
                 return this._addedFormat.format(added);
             },
             displayCount:function(total){
-                return CG.Utils.displayCountFound("document", "documents", total);
+                return CG.Utils.Displays.countFound("document", "documents", total);
             },
-            hasDocuments:function(length){
-                return length > 0;
-            },
-            computeDocumentClasses:function(model, processingFinished, processingSuccess){
-                return "document " + (processingFinished == true ? processingSuccess ? 'transfer-success' : 'transfer-error' : '');
+            computeProgressClass:function(processingFinished, processingSuccess){
+                return "doc-footer " + (processingFinished === true ? processingSuccess === true ? 'transfer-success' : 'transfer-error' : '');
             },
             computeToastDuration:function(length, base){
                 return length * base;
             },
-            computeDragZoneClass:function(docCount){
-                return docCount == 0 ?  "drag-empty" : "";
-            },
-            computeProgressStyle:function(progress){
-                return "width:" + (progress || 0) + "%";
-            },
             isProcessingCompletedUnsuccessful:function(finished, success){
                 return finished == true && success == false;
-            },
-            isProcessingCompletedSuccessful:function(finished, success){
-                return finished == true && success == true;
-            },
-            isOverSize:function(size, warning){
-                return size >= warning;
-            },
-            hasHandle:function(handle){
-                return handle != undefined;
             },
             sortDocs:function(a,b){
                 if(!a.updatedAt || !b.updatedAt) {
@@ -515,7 +498,7 @@
                     var doc = this.documents[i];
                     doc._cgId = this._id++;
                     doc.categories = doc.categories || [];
-                    this._docObservers[doc._cgId] = CG.Utils.observe({
+                    this._docObservers[doc._cgId] = CG.Utils.Objects.observe({
                         observed:doc,
                         watchedProperties:this._docAutoSaveObservedProperties,
                         changeCallback:this.onDocumentAutoSave.bind(this),
@@ -530,7 +513,7 @@
                 return Math.round(progress) + "%";
             },
             _displaySize:function(size){
-                return CG.Utils.formatNumber(size, "0.00 b");
+                return CG.Utils.Formats.number(size, "0.00 b");
             },
             uploadUrlChanged:function(){
                 if(this._dropzone) {
@@ -549,7 +532,7 @@
                     uploadMultiple:false,
 //                        maxFilesize:16,
                     clickable:this.$.addbutton,
-                    dictFileTooBig: "File \"{{filename}}\" is too big ({{filesize}}MiB). Max filesize: {{maxFilesize}}MiB."
+                    dictFileTooBig: "File \"{{filename}}\" is too big ({{filesize}}MiB). Max file size: {{maxFilesize}}MiB."
                 });
 //                    this._dropzone.on("uploadprogress", function(file,a,b,c,d) {
                 this._dropzone.on("addedfile", function(file) {
@@ -576,6 +559,7 @@
                         canceled:null,
                         data:null
                     };
+                    doc.model.processing = processing;
                     this._setDocumentProperty(doc.index, "processing", processing);
                     for(var prop in processing) {
                         this.notifyPath("processing." + prop, processing[prop]);
@@ -647,7 +631,7 @@
                 }
             },
             _getDocFromEvent:function(e){
-                return e.model.get("model");
+                return e.model.item;
             },
             _onDeleteDocument:function(e){
                 this.deleteDocument(this._getDocFromEvent(e), this.autoSave);
