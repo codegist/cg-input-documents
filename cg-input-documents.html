@@ -448,6 +448,9 @@
             observers:[
                 "documentsChanged(documents.*)"
             ],
+            listeners:{
+                "click":"cancelEvent"
+            },
             downloadLink:function(model){
                 return "#"
             },
