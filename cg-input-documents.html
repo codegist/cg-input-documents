@@ -501,7 +501,7 @@
                     var doc = this.documents[i];
                     doc._cgId = this._id++;
                     doc.categories = doc.categories || [];
-                    this._docObservers[doc._cgId] = CG.Utils.Objects.observe({
+                    this._docObservers[doc._cgId] = CG.Utils.Objects.observe({ //TODO REMOVE THIS, USE bind-value and on-input instead
                         observed:doc,
                         watchedProperties:this._docAutoSaveObservedProperties,
                         changeCallback:this.onDocumentAutoSave.bind(this),
