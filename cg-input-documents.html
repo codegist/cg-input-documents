@@ -651,6 +651,7 @@
                 if(rememberDeleted === true) {
                     this._deletedDocuments.push(doc);
                 }
+                this.fire("input", doc);
             },
             onUploadCompleted:function(doc, response){
                 doc.file = response.file;
@@ -732,6 +733,7 @@
                                     this.fireApplicationEvent("document-updated", response.data);
                                     break;
                             }
+                            this.fire("input", doc);
                             completeCallback && completeCallback(response);
                         }.bind(this),
                         failure:function(response){
