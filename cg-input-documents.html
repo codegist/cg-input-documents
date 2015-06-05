@@ -249,7 +249,7 @@
                 <input type="file" name="file" is="iron-input" required$="[[required]]" hidden id="input"/>
                 <div id="listScroller" hidden$="[[!hasLength(documents.length)]]" >
                     <template is="dom-repeat" items="[[documents]]" sort="sortDocs">
-                        <div class="document">
+                        <div class="document" on-input="_onInput">
                             <div class="doc-wrapper">
                                 <div class="doc-infos">
                                     <div>
@@ -406,14 +406,6 @@
                     type:Array,
                     value:[]
                 },
-                _docObservers:{
-                    type:Object,
-                    value:{}
-                },
-                _docAutoSaveObservedProperties:{
-                    type:Array,
-                    value:["description", "categories"]
-                },
                 _docTemplate:{
                     type:Object,
                     value:{
@@ -487,11 +479,6 @@
             },
             documentsChanged:function(oldValue, newValue){
                 var internalChange = (newValue === undefined);
-                this._id = 1;
-                for(var key in this._docObservers){
-                    this._docObservers[key].destroy(true);
-                    delete this._docObservers[key];
-                }
                 if(!this.documents) {
                     this._deletedDocuments.splice(0, this._deletedDocuments.length);
                     return true;
@@ -499,14 +486,8 @@
 
                 for(var i =0; i<this.documents.length;i++){
                     var doc = this.documents[i];
-                    doc._cgId = this._id++;
+                    doc._cgId = doc._cgId || this._id++;
                     doc.categories = doc.categories || [];
-                    this._docObservers[doc._cgId] = CG.Utils.Objects.observe({ //TODO REMOVE THIS, USE bind-value and on-input instead
-                        observed:doc,
-                        watchedProperties:this._docAutoSaveObservedProperties,
-                        changeCallback:this.onDocumentAutoSave.bind(this),
-                        observedTemplate:this._docTemplate
-                    });
                 }
                 if(!internalChange) {
                     this._deletedDocuments.splice(0, this._deletedDocuments.length);
@@ -640,6 +621,7 @@
                 this.deleteDocument(this._getDocFromEvent(e), this.autoSave);
             },
             deleteDocument:function(doc, force, completeCallback){
+                this.cancelScheduledSave(doc);
                 if(force && this.isDataAware()) {
                     this.fireDataRequest({
                         type:"document/delete", typePrefix:false,
@@ -669,16 +651,24 @@
                 if(rememberDeleted === true) {
                     this._deletedDocuments.push(doc);
                 }
-                if(this._docObservers.hasOwnProperty(doc._cgId)) {
-                    this._docObservers[doc._cgId].destroy();
-                    delete this._docObservers[doc._cgId];
-                }
             },
             onUploadCompleted:function(doc, response){
                 doc.file = response.file;
                 doc.hash = response.hash;
                 doc._dirty = true;
                 this.onDocumentAutoSave(doc, true);
+            },
+            _onInput:function(e){
+                this.scheduleSave(e.model.item);
+            },
+            cancelScheduledSave:function(doc){
+                this.cancelDebouncer("autosave_" + doc._cgId);
+            },
+            scheduleSave:function(doc){
+                doc._dirty = true;
+                this.debounce("autosave_" + doc._cgId, function(){
+                    this.onDocumentAutoSave(doc);
+                }, 3000);
             },
             onDocumentAutoSave:function(doc, force){
                 if(!this.autoSave) {
@@ -692,7 +682,6 @@
                 this.saveDocument(doc);
             },
             saveDocuments:function(completeCallback){
-
                 var toSave = this._deletedDocuments.length;
                 this.documents && this.documents.forEach(function(doc){
                     if(doc._dirty) {
