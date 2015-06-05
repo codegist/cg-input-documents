@@ -396,6 +396,10 @@
                     type:String,
                     value:"Documents"
                 },
+                autoSaveDelay:{
+                    type:Number,
+                    value:3000
+                },
                 _id:{
                     type:Number,
                     value:1
@@ -405,19 +409,6 @@
                 _deletedDocuments:{
                     type:Array,
                     value:[]
-                },
-                _docTemplate:{
-                    type:Object,
-                    value:{
-                        name: "",
-                        size: 0,
-                        type: "",
-                        description: "",
-                        categories: [],
-                        createdAt: new Date(),
-                        updatedAt: new Date()
-                    },
-                    readOnly:true
                 },
                 _messages:{
                     type:Array,
@@ -669,7 +660,7 @@
                 doc._dirty = true;
                 this.debounce("autosave_" + doc._cgId, function(){
                     this.onDocumentAutoSave(doc);
-                }, 3000);
+                }, this.autoSaveDelay);
             },
             onDocumentAutoSave:function(doc, force){
                 if(!this.autoSave) {
