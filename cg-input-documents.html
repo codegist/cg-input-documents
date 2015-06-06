@@ -396,6 +396,10 @@
                     type:String,
                     value:"Documents"
                 },
+                locale:{
+                    type:String,
+                    value:window.navigator.userLanguage || window.navigator.language
+                },
                 autoSaveDelay:{
                     type:Number,
                     value:3000
@@ -416,7 +420,9 @@
                 },
                 _addedFormat:{
                     type:Intl.DateTimeFormat,
-                    value:Intl.DateTimeFormat(this.locale, {day:'2-digit', month:'2-digit', year:'numeric'})
+                    value:function(){
+                        return Intl.DateTimeFormat(this.locale, {day:'2-digit', month:'2-digit', year:'numeric'})
+                    }
                 },
                 _cgFileManager:{
                     type:CGFileManager,
