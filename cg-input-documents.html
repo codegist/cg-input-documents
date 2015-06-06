@@ -247,7 +247,7 @@
                     <span class="result-count">[[displayCount(documents.length)]]</span>
                 </div>
                 <input type="file" name="file" is="iron-input" required$="[[required]]" hidden id="input"/>
-                <div id="listScroller" hidden$="[[!hasLength(documents.length)]]" >
+                <div id="listScroller" hidden$="[[!isGreaterThan(documents.length, 0)]]" >
                     <template is="dom-repeat" items="[[documents]]" sort="sortDocs">
                         <div class="document" on-input="_onInput">
                             <div class="doc-wrapper">
@@ -257,7 +257,7 @@
                                         <span class="doc-added" hidden$="[[!showAdded]]">[[_displayAdded(item.updatedAt)]]</span>
                                         <span class="doc-name"><a href$="[[downloadLink(item)]]">[[item.name]]</a></span><!--TODO REMOVE THAT PATH FROM HERE -->
                                         <span class="doc-size">[[_displaySize(item.size)]]</span>
-                                        <iron-icon hidden$="[[!ifGreaterThan(item.size, warningSize)]]" class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></iron-icon>
+                                        <iron-icon hidden$="[[!isGreaterThan(item.size, warningSize)]]" class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></iron-icon>
                                         <cg-link hidden$="[[!item.link]]" class="doc-link" link="[[item.link]]" linkSource="[[item]]" source="[[self]]"></cg-link>
                                         <span hidden$="[[isDefined(item.handle)]]" class="doc-new">New</span>
                                     </div>
@@ -292,13 +292,13 @@
                     <div class="spacer"></div>
                 </div>
                 <div class$="[[ifEqualsTo(documents.length, 0, 'drag-empty', '')]]">
-                    <p hidden$="[[hasLength(documents.length)]]" class="big">Drag files here</p>
-                    <p hidden$="[[hasLength(documents.length)]]" class="big">or</p>
+                    <p hidden$="[[isGreaterThan(documents.length, 0)]]" class="big">Drag files here</p>
+                    <p hidden$="[[isGreaterThan(documents.length, 0)]]" class="big">or</p>
                     <div>
                         <paper-button id="addbutton" class="add-doc">
                             <iron-icon icon="fa:files-o"></iron-icon>
-                            <span hidden$="[[!hasLength(documents.length)]]">Select files from your computer</span>
-                            <span hidden$="[[hasLength(documents.length)]]">Add documents</span>
+                            <span hidden$="[[!isGreaterThan(documents.length, 0)]]">Select files from your computer</span>
+                            <span hidden$="[[isGreaterThan(documents.length, 0)]]">Add documents</span>
                         </paper-button>
                     </div>
                 </div>
@@ -404,10 +404,6 @@
                     type:Number,
                     value:3000
                 },
-                _id:{
-                    type:Number,
-                    value:1
-                },
                 _selection:Object,
                 _dropzone:Object,
                 _deletedDocuments:{
@@ -437,73 +433,6 @@
             observers:[
                 "documentsChanged(documents.*)"
             ],
-            listeners:{
-                "click":"cancelEvent"
-            },
-            downloadLink:function(model){
-                return "#"
-            },
-            autoUploadChanged:function(){
-                if(this._dropzone) {
-                    this._dropzone.options.autoProcessQueue = this.autoUpload;
-                }
-            },
-            _displayMimeIcon:function(mime){
-                return this._cgFileManager.getIconForMime(mime);
-            },
-            _displayAdded:function(added){
-                return this._addedFormat.format(added);
-            },
-            displayCount:function(total){
-                return CG.Utils.Displays.countFound("document", "documents", total);
-            },
-            computeProgressClass:function(processingFinished, processingSuccess){
-                return "doc-footer " + (processingFinished === true ? processingSuccess === true ? 'transfer-success' : 'transfer-error' : '');
-            },
-            computeToastDuration:function(length, base){
-                return length * base;
-            },
-            isProcessingCompletedUnsuccessful:function(finished, success){
-                return finished == true && success == false;
-            },
-            sortDocs:function(a,b){
-                if(!a.updatedAt || !b.updatedAt) {
-                    return 0;
-                }
-                var at = a.updatedAt.getTime();
-                var bt = b.updatedAt.getTime();
-                return at < bt ? 1 : at > bt ? -1 : 0;
-            },
-            documentsChanged:function(oldValue, newValue){
-                var internalChange = (newValue === undefined);
-                if(!this.documents) {
-                    this._deletedDocuments.splice(0, this._deletedDocuments.length);
-                    return true;
-                }
-
-                for(var i =0; i<this.documents.length;i++){
-                    var doc = this.documents[i];
-                    doc._cgId = doc._cgId || this._id++;
-                    doc.categories = doc.categories || [];
-                }
-                if(!internalChange) {
-                    this._deletedDocuments.splice(0, this._deletedDocuments.length);
-                }
-            },
-            _displayProgress:function(progress) {
-                return Math.round(progress) + "%";
-            },
-            _displaySize:function(size){
-                return CG.Utils.Formats.number(size, "0.00 b");
-            },
-            uploadUrlChanged:function(){
-                if(this._dropzone) {
-                    this._dropzone.options.url = this.uploadUrl;
-                }
-            },
-            _setDocumentProperty:function(index, prop, value){
-                this.set("documents." + index + "." + prop, value)
-            },
             ready:function(){
                 this.uploadUrl = this.globals.uploadUrl || this.uploadUrl;
                 this._dropzone = new Dropzone(Polymer.dom(this.root).querySelector("#dragzone"), {
@@ -593,9 +522,74 @@
                         failure:function(response){}.bind(this)
                     });
                 }
+                this.reload();
+            },
+            downloadLink:function(model){
+                return "#"
+            },
+            autoUploadChanged:function(){
+                if(this._dropzone) {
+                    this._dropzone.options.autoProcessQueue = this.autoUpload;
+                }
+            },
+            _displayMimeIcon:function(mime){
+                return this._cgFileManager.getIconForMime(mime);
+            },
+            _displayAdded:function(added){
+                return this._addedFormat.format(added);
+            },
+            displayCount:function(total){
+                return CG.Utils.Displays.countFound("document", "documents", total);
+            },
+            computeProgressClass:function(processingFinished, processingSuccess){
+                return "doc-footer " + (processingFinished === true ? processingSuccess === true ? 'transfer-success' : 'transfer-error' : '');
+            },
+            computeToastDuration:function(length, base){
+                return length * base;
+            },
+            isProcessingCompletedUnsuccessful:function(finished, success){
+                return finished == true && success == false;
+            },
+            sortDocs:function(a,b){
+                if(!a.updatedAt || !b.updatedAt) {
+                    return 0;
+                }
+                var at = a.updatedAt.getTime();
+                var bt = b.updatedAt.getTime();
+                return at < bt ? 1 : at > bt ? -1 : 0;
+            },
+            documentsChanged:function(oldValue, newValue){
+                var internalChange = (newValue === undefined);
+                if(!this.documents) {
+                    this._deletedDocuments.splice(0, this._deletedDocuments.length);
+                    return true;
+                }
+
+                for(var i =0; i<this.documents.length;i++){
+                    var doc = this.documents[i];
+                    doc._cgId = doc._cgId || this.genId();
+                    doc.categories = doc.categories || [];
+                }
+                if(!internalChange) {
+                    this._deletedDocuments.splice(0, this._deletedDocuments.length);
+                }
+            },
+            _displayProgress:function(progress) {
+                return Math.round(progress) + "%";
+            },
+            _displaySize:function(size){
+                return CG.Utils.Formats.number(size, "0.00 b");
+            },
+            uploadUrlChanged:function(){
+                if(this._dropzone) {
+                    this._dropzone.options.url = this.uploadUrl;
+                }
+            },
+            _setDocumentProperty:function(index, prop, value){
+                this.set("documents." + index + "." + prop, value)
             },
             _retryUpload:function(e){
-                e.stopPropagation();
+                this.cancelEvent(e);
                 var doc = this._getDocFromEvent(e);
                 this._setDocumentProperty(this.documents.indexOf(doc), "processing", null);
                 this._dropzone.processFile(doc.handle);
@@ -615,6 +609,7 @@
                 return e.model.item;
             },
             _onDeleteDocument:function(e){
+                this.cancelEvent(e);
                 this.deleteDocument(this._getDocFromEvent(e), this.autoSave);
             },
             deleteDocument:function(doc, force, completeCallback){
