@@ -652,6 +652,7 @@
                 this.onDocumentAutoSave(doc, true);
             },
             _onInput:function(e){
+                console.log("input")
                 this.scheduleSave(e.model.item);
             },
             cancelScheduledSave:function(doc){
