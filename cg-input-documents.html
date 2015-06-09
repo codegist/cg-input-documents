@@ -282,7 +282,7 @@
                                     <span class="doc-upload-error" hidden$="[[item.processing.canceled]]">Server error</span>
                                     <div><paper-icon-button class="doc-upload-retry" icon="fa:repeat" on-tap="_retryUpload">retry</paper-icon-button></div>
                                 </div>
-                                <div hidden$="[[!and(item.processing.finished, item.processing.success)]]">
+                                <div hidden$="[[falses(item.processing.finished, item.processing.success)]]">
                                     <iron-icon class="doc-upload-success-icon" icon="fa:check-circle-o"></iron-icon>
                                     <span class="doc-upload-success">Document transferred</span>
                                 </div>
