@@ -302,6 +302,7 @@
                         </paper-button>
                     </div>
                 </div>
+                <!-- TODO CHECK on-core-overlay-close-completed -->
                 <paper-toast id="messages" on-core-overlay-close-completed="_discardMessages" duration="[[computeToastDuration(_messages.length, 3000)]]">
                     <div class="messages">
                         <template is="dom-repeat" items="[[_messages]]" as="m">
