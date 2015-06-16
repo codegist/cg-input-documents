@@ -4,7 +4,10 @@
 <link rel="import" href="../cg-base/cg-required-validator.html">
 <link rel="import" href="../cg-base/cg-validatable-behavior.html">
 <link rel="import" href="../paper-material/paper-material.html">
-<link rel="import" href="../cg-base/cg-base-behavior.html">
+<link rel="import" href="../cg-behaviors/cg-base-behavior.html">
+<link rel="import" href="../cg-behaviors/cg-application-datasource-aware-behavior.html">
+<link rel="import" href="../cg-behaviors/cg-application-event-behavior.html">
+<link rel="import" href="../cg-behaviors/cg-application-context-behavior.html">
 <link rel="import" href="../paper-button/paper-button.html">
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-toast/paper-toast.html">
@@ -426,12 +429,12 @@
                     value:"cg-required-validator"
                 }
             },
-            behaviors:[CG.BaseBehavior, CG.ValidatableBehavior],
+            behaviors:[CG.BaseBehavior, CG.ApplicationDataSourceAwareBehavior, CG.ApplicationEventBehavior, CG.ValidatableBehavior, CG.ApplicationContextBehavior],
             observers:[
                 "documentsChanged(documents.*)"
             ],
             ready:function(){
-                this.uploadUrl = this.globals.uploadUrl || this.uploadUrl;
+                this.uploadUrl = this.context.uploadUrl || this.uploadUrl;
                 this._dropzone = new Dropzone(Polymer.dom(this.root).querySelector("#dragzone"), {
                     url: this.uploadUrl || "#",
                     autoProcessQueue: this.autoUpload,
@@ -457,7 +460,7 @@
 
                 this._dropzone.on("processing", function(file){
                     var doc = this._getDocByHandle(file);
-                    console.log("[cg-input-documents] processing " + doc.model.name);
+                    console.log(this.toString(), "processing " + doc.model.name);
                     var processing = {
                         progress:0,
                         bytes:0,
@@ -477,12 +480,12 @@
                     if(!doc || !doc.model.processing) return;
                     this._setDocumentProperty(doc.index, "processing.progress", progress);
                     this._setDocumentProperty(doc.index, "processing.bytes", bytes);
-                    console.log("[cg-input-documents] uploadprogress " + doc.model.name + " / " + progress);
+                    console.log(this.toString(), "uploadprogress " + doc.model.name + " / " + progress);
                 }.bind(this));
                 this._dropzone.on("error", function(file, message, xhr){
                     var doc = this._getDocByHandle(file);
                     if(!doc) return;
-                    console.log("[cg-input-documents] error " + doc.model.name);
+                    console.log(this.toString(), "error " + doc.model.name);
                     this._setDocumentProperty(doc.index, "processing.finished", true);
                     this._setDocumentProperty(doc.index, "processing.success", false);
                     this._setDocumentProperty(doc.index, "processing.data", message);
@@ -490,7 +493,7 @@
                 }.bind(this));
                 this._dropzone.on("success", function(file, responseText, e){
                     var doc = this._getDocByHandle(file);
-                    console.log("[cg-input-documents] success " + doc.model.name);
+                    console.log(this.toString(), "success " + doc.model.name);
                     if(!doc) return;
                     if(doc.model.processing) {
                         this._setDocumentProperty(doc.index, "processing.finished", true);
@@ -502,7 +505,7 @@
                 this._dropzone.on("canceled", function(file){
                     var doc = this._getDocByHandle(file);
                     if(!doc) return;
-                    console.log("[cg-input-documents] canceled " + doc.model.name);
+                    console.log(this.toString(), "canceled " + doc.model.name);
                     if(doc.model.processing) {
                         this._setDocumentProperty(doc.index, "processing.finished", true);
                         this._setDocumentProperty(doc.index, "processing.success", false);
@@ -510,7 +513,7 @@
                     }
                     processQueueIfNeeded();
                 }.bind(this));
-                if(this.isDataAware() && this.categories == null) {
+                if(this.categories == null) {
                     this.fireDataRequest({
                         type:"documents/categories/data", typePrefix:false,
                         success:function(response){
@@ -596,10 +599,10 @@
             },
             refresh:function(){
                 if(this.isDataAware()) {
-                    console.log("[cg-input-documents] no documents provided firing data request");
+                    console.log(this.toString(), "no documents provided firing data request");
                     this.reload();
                 }else{
-                    console.log("[cg-input-documents] documents provided, using them");
+                    console.log(this.toString(), "documents provided, using them");
                 }
             },
             _getDocFromEvent:function(e){
@@ -649,7 +652,6 @@
                 this.onDocumentAutoSave(doc, true);
             },
             _onInput:function(e){
-                console.log("input")
                 this.scheduleSave(e.model.item);
             },
             cancelScheduledSave:function(doc){
@@ -663,11 +665,11 @@
             },
             onDocumentAutoSave:function(doc, force){
                 if(!this.autoSave) {
-                    console.log("[cg-input-documents] Autosave disabled, ignoring request");
+                    console.log(this.toString(), "Autosave disabled, ignoring request");
                     return;
                 }
                 if(force !== true && doc.handle) {
-                    console.log("[cg-input-documents] document is new, waiting for upload to complete before saving.");
+                    console.log(this.toString(), "document is new, waiting for upload to complete before saving.");
                     return;
                 }
                 this.saveDocument(doc);
@@ -731,11 +733,11 @@
                         }.bind(this)
                     });
                 }else{
-                    console.log("[cg-input-documents] document is unchanged, ignoring save request.");
+                    console.log(this.toString(), "document is unchanged, ignoring save request.");
                 }
             },
-            contextChanged:function(){
-                this.reload();
+            onContextChanged:function(){
+                this.reload(); // todo inject conditions to reload on contextChangedPath
             },
             reload:function(){
                 this.fireDataRequest({
@@ -790,7 +792,7 @@
             },
             onApplicationEvent:function(type, event){
                 if(this.refreshOnApplicationEvents && this.refreshOnApplicationEvents.indexOf(type) != -1) {
-                    console.log("[cg-input-documents] onApplicationEvent(type:'" + type + "') received, trigger data refresh");
+                    console.log(this.toString(), "onApplicationEvent(type:'" + type + "') received, trigger data refresh");
                     this.refresh();
                 }
             },
