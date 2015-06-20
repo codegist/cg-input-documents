@@ -6,7 +6,7 @@
 <link rel="import" href="../paper-material/paper-material.html">
 <link rel="import" href="../cg-behaviors/cg-base-behavior.html">
 <link rel="import" href="../cg-behaviors/cg-application-datasource-aware-behavior.html">
-<link rel="import" href="../cg-behaviors/cg-application-event-behavior.html">
+<link rel="import" href="../cg-behaviors/cg-application-event-listener-behavior.html">
 <link rel="import" href="../cg-behaviors/cg-application-context-behavior.html">
 <link rel="import" href="../paper-button/paper-button.html">
 <link rel="import" href="../paper-input/paper-input.html">
@@ -261,7 +261,7 @@
                                         <span class="doc-name"><a href$="[[downloadLink(item)]]">[[item.name]]</a></span><!--TODO REMOVE THAT PATH FROM HERE -->
                                         <span class="doc-size">[[_displaySize(item.size)]]</span>
                                         <iron-icon hidden$="[[!isGreaterThan(item.size, warningSize)]]" class="doc-size-warning" title="This document is quite big!" icon="fa:exclamation-circle"></iron-icon>
-                                        <cg-link hidden$="[[!item.link]]" class="doc-link" link="[[item.link]]" linkSource="[[item]]" source="[[self]]"></cg-link>
+                                        <cg-link hidden$="[[!item.link]]" class="doc-link" link="[[item.link]]" link-source="[[item]]" source="[[self]]"></cg-link>
                                         <span hidden$="[[isDefined(item.handle)]]" class="doc-new">New</span>
                                     </div>
                                     <paper-input label="Description" value="{{item.description}}" class="doc-desc" no-label-float="true"></paper-input>
@@ -429,7 +429,7 @@
                     value:"cg-required-validator"
                 }
             },
-            behaviors:[CG.BaseBehavior, CG.ApplicationDataSourceAwareBehavior, CG.ApplicationEventBehavior, CG.ValidatableBehavior, CG.ApplicationContextBehavior],
+            behaviors:[CG.BaseBehavior, CG.ApplicationDataSourceAwareBehavior, CG.ApplicationEventListenerBehavior, CG.ValidatableBehavior, CG.ApplicationContextBehavior],
             observers:[
                 "documentsChanged(documents.*)"
             ],
