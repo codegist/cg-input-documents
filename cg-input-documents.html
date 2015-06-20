@@ -680,7 +680,7 @@
                     if(doc._dirty) {
                         toSave++;
                     }
-                }.bind(this));
+                }, this);
                 if(toSave == 0) {
                     return completeCallback && completeCallback([]);
                 }
@@ -694,7 +694,7 @@
                 };
                 this.documents && this.documents.forEach(function(doc){
                     this.saveDocument(doc, callback);
-                }.bind(this));
+                }, this);
                 for(var i = this._deletedDocuments.length - 1; i>=0;i--){
                     this.deleteDocument(this._deletedDocuments[i], true, callback);
                     this._deletedDocuments.splice(i, 1);
