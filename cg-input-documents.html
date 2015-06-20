@@ -460,7 +460,7 @@
 
                 this._dropzone.on("processing", function(file){
                     var doc = this._getDocByHandle(file);
-                    console.log(this.toString(), "processing " + doc.model.name);
+                    console.log(this.toString(), "processing", doc.model.name);
                     var processing = {
                         progress:0,
                         bytes:0,
@@ -480,12 +480,12 @@
                     if(!doc || !doc.model.processing) return;
                     this._setDocumentProperty(doc.index, "processing.progress", progress);
                     this._setDocumentProperty(doc.index, "processing.bytes", bytes);
-                    console.log(this.toString(), "uploadprogress " + doc.model.name + " / " + progress);
+                    console.log(this.toString(), "uploadprogress", doc.model.name, "/", progress);
                 }.bind(this));
                 this._dropzone.on("error", function(file, message, xhr){
                     var doc = this._getDocByHandle(file);
                     if(!doc) return;
-                    console.log(this.toString(), "error " + doc.model.name);
+                    console.log(this.toString(), "error" , doc.model.name);
                     this._setDocumentProperty(doc.index, "processing.finished", true);
                     this._setDocumentProperty(doc.index, "processing.success", false);
                     this._setDocumentProperty(doc.index, "processing.data", message);
@@ -493,7 +493,7 @@
                 }.bind(this));
                 this._dropzone.on("success", function(file, responseText, e){
                     var doc = this._getDocByHandle(file);
-                    console.log(this.toString(), "success " + doc.model.name);
+                    console.log(this.toString(), "success" , doc.model.name);
                     if(!doc) return;
                     if(doc.model.processing) {
                         this._setDocumentProperty(doc.index, "processing.finished", true);
@@ -505,7 +505,7 @@
                 this._dropzone.on("canceled", function(file){
                     var doc = this._getDocByHandle(file);
                     if(!doc) return;
-                    console.log(this.toString(), "canceled " + doc.model.name);
+                    console.log(this.toString(), "canceled" , doc.model.name);
                     if(doc.model.processing) {
                         this._setDocumentProperty(doc.index, "processing.finished", true);
                         this._setDocumentProperty(doc.index, "processing.success", false);
@@ -792,7 +792,7 @@
             },
             onApplicationEvent:function(type, event){
                 if(this.refreshOnApplicationEvents && this.refreshOnApplicationEvents.indexOf(type) != -1) {
-                    console.log(this.toString(), "onApplicationEvent(type:'" + type + "') received, trigger data refresh");
+                    console.log(this.toString(), "onApplicationEvent(type:'" , type , "') received, trigger data refresh");
                     this.refresh();
                 }
             },
