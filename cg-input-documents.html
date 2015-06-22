@@ -434,7 +434,7 @@
                 "documentsChanged(documents.*)"
             ],
             ready:function(){
-                this.uploadUrl = this.context.uploadUrl || this.uploadUrl;
+                this.uploadUrl = this.get("config.uploadUrl", this.context) || this.uploadUrl;
                 this._dropzone = new Dropzone(this.querySelectRoot("#dragzone"), {
                     url: this.uploadUrl || "#",
                     autoProcessQueue: this.autoUpload,
