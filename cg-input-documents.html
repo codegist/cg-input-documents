@@ -435,7 +435,7 @@
             ],
             ready:function(){
                 this.uploadUrl = this.context.uploadUrl || this.uploadUrl;
-                this._dropzone = new Dropzone(Polymer.dom(this.root).querySelector("#dragzone"), {
+                this._dropzone = new Dropzone(this.querySelectRoot("#dragzone"), {
                     url: this.uploadUrl || "#",
                     autoProcessQueue: this.autoUpload,
                     previewsContainer:false,
