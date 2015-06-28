@@ -16,6 +16,7 @@
 <link rel="import" href="../cg-input-tags/cg-input-tags.html">
 <link rel="import" href="../cg-utils/cg-utils.html">
 <link rel="import" href="../cg-link/cg-link.html">
+<link rel="import" href="../cg-task-upload/cg-task-upload-factory.html">
 <link rel="import" href="../font-awesome-polymer-icons/fa-icons.html">
 
 <link rel="import" href="../dropzone/dist/min/dropzone.min.css">
@@ -116,13 +117,8 @@
             background-color: #d34336;
         }
 
-        .doc-wrapper .doc-upload-progressbar-wrapper{
-            position:relative;
-            height:10px;
-        }
         .doc-wrapper .doc-upload-progressbar{
-            position:absolute;
-            height:100%;
+            height:10px;
             background-color: #A7ACE5;
             border-radius: 5px;
         }
@@ -229,6 +225,7 @@
         }
         .doc-wrapper #dragzone .doc-upload-progressbar-wrapper {
             @apply(--layout-flex);
+            @apply(--layout-self-center);
         }
         .doc-wrapper #dragzone .doc-upload-error-wrapper {
             @apply(--layout-horizontal);
@@ -437,7 +434,8 @@
                 this.uploadUrl = this.get("config.uploadUrl", this.context) || this.uploadUrl;
                 this._dropzone = new Dropzone(this.querySelectRoot("#dragzone"), {
                     url: this.uploadUrl || "#",
-                    autoProcessQueue: this.autoUpload,
+                    autoProcessQueue: false,
+//                    autoProcessQueue: this.autoUpload, // TODO CHECK THIS
                     previewsContainer:false,
                     uploadMultiple:false,
 //                        maxFilesize:16,
@@ -447,72 +445,59 @@
 //                    this._dropzone.on("uploadprogress", function(file,a,b,c,d) {
                 this._dropzone.on("addedfile", function(file) {
                     this._dropzone.accept(file, function(error) {
+                        this._dropzone.removeAllFiles();
                         this._onDocAdded(file, error ? error.replace("{{filename}}", file.name) : error);
+                        var uploadTask = CGUploadTaskFactory.task(this.uploadUrl, file, function(event, data, task, file){
+                            var doc = this._getDocByHandle(file);
+                            if(!doc) return;
+                            switch(event){
+                                case "start":
+                                    var processing = {
+                                        progress:0,
+                                        bytes:0,
+                                        finished:false,
+                                        success:null,
+                                        canceled:null,
+                                        data:null
+                                    };
+                                    doc.model.processing = processing;
+                                    this._setDocumentProperty(doc.index, "processing", processing);
+                                    break;
+                                case "progress":
+                                    this._setDocumentProperty(doc.index, "processing.progress", data.progress);
+                                    console.log(this.toString(), "uploadprogress", doc.model.name, "/", data.progress);
+                                    break;
+                                case "finished":
+                                    if(data.success) {
+                                        this._setDocumentProperty(doc.index, "processing.finished", true);
+                                        this._setDocumentProperty(doc.index, "processing.success", true);
+                                    }else if(data.canceled){
+                                        this._setDocumentProperty(doc.index, "processing.finished", true);
+                                        this._setDocumentProperty(doc.index, "processing.success", false);
+                                        this._setDocumentProperty(doc.index, "processing.canceled", true);
+                                    }else {
+                                        console.log(this.toString(), "error" , doc.model.name);
+                                        this._setDocumentProperty(doc.index, "processing.finished", true);
+                                        this._setDocumentProperty(doc.index, "processing.success", false);
+                                        this._setDocumentProperty(doc.index, "processing.data", data);
+                                    }
+                                    break;
+                            }
+                        }.bind(this));
+                        var saveTask = new Task("Save document " + file.name, function(task, doc, context){
+                            task.progress(50);
+                            this.onUploadCompleted(doc.model, task.dependsOn.info.data, context, function(success, response){
+                                if(success) {
+                                    task.success(response.data);
+                                }else{
+                                    task.error(response.data);
+                                }
+                            });
+                        }, [this._getDocByHandle(file), CG.Utils.Objects.clone(false, {}, this.dataContext)], this, function(){}, uploadTask);
+                        this.fireDocument("cg-tasks", "schedule-tasks", [uploadTask, saveTask]);
                     }.bind(this));
                 }.bind(this));
 
-                var processQueueIfNeeded = function() {
-                    if(this._dropzone.options.autoProcessQueue == false && this._dropzone.getQueuedFiles().length > 0) {
-                        this._dropzone.processQueue();
-                    }
-                    //console.log("[cg-input-documents] canceledmultiple\n" + JSON.stringify(arguments, null, "\t"))
-                }.bind(this);
-
-                this._dropzone.on("processing", function(file){
-                    var doc = this._getDocByHandle(file);
-                    console.log(this.toString(), "processing", doc.model.name);
-                    var processing = {
-                        progress:0,
-                        bytes:0,
-                        finished:false,
-                        success:null,
-                        canceled:null,
-                        data:null
-                    };
-                    doc.model.processing = processing;
-                    this._setDocumentProperty(doc.index, "processing", processing);
-                    for(var prop in processing) {
-                        this.notifyPath("processing." + prop, processing[prop]);
-                    }
-                }.bind(this));
-                this._dropzone.on("uploadprogress", function(file, progress, bytes){
-                    var doc = this._getDocByHandle(file);
-                    if(!doc || !doc.model.processing) return;
-                    this._setDocumentProperty(doc.index, "processing.progress", progress);
-                    this._setDocumentProperty(doc.index, "processing.bytes", bytes);
-                    console.log(this.toString(), "uploadprogress", doc.model.name, "/", progress);
-                }.bind(this));
-                this._dropzone.on("error", function(file, message, xhr){
-                    var doc = this._getDocByHandle(file);
-                    if(!doc) return;
-                    console.log(this.toString(), "error" , doc.model.name);
-                    this._setDocumentProperty(doc.index, "processing.finished", true);
-                    this._setDocumentProperty(doc.index, "processing.success", false);
-                    this._setDocumentProperty(doc.index, "processing.data", message);
-                    processQueueIfNeeded();
-                }.bind(this));
-                this._dropzone.on("success", function(file, responseText, e){
-                    var doc = this._getDocByHandle(file);
-                    console.log(this.toString(), "success" , doc.model.name);
-                    if(!doc) return;
-                    if(doc.model.processing) {
-                        this._setDocumentProperty(doc.index, "processing.finished", true);
-                        this._setDocumentProperty(doc.index, "processing.success", true);
-                        this.onUploadCompleted(doc.model, responseText);
-                    }
-                    processQueueIfNeeded();
-                }.bind(this));
-                this._dropzone.on("canceled", function(file){
-                    var doc = this._getDocByHandle(file);
-                    if(!doc) return;
-                    console.log(this.toString(), "canceled" , doc.model.name);
-                    if(doc.model.processing) {
-                        this._setDocumentProperty(doc.index, "processing.finished", true);
-                        this._setDocumentProperty(doc.index, "processing.success", false);
-                        this._setDocumentProperty(doc.index, "processing.canceled", true);
-                    }
-                    processQueueIfNeeded();
-                }.bind(this));
                 if(this.categories == null) {
                     this.fireDataRequest({
                         type:"documents/categories/data", typePrefix:false,
@@ -645,11 +630,11 @@
                 }
                 this.fire("input", doc);
             },
-            onUploadCompleted:function(doc, response){
+            onUploadCompleted:function(doc, response, context, completeCallback){
                 doc.file = response.file;
                 doc.hash = response.hash;
                 doc._dirty = true;
-                this.onDocumentAutoSave(doc, true);
+                this.onDocumentAutoSave(doc, true, context, completeCallback);
             },
             _onInput:function(e){
                 this.scheduleSave(e.model.item);
@@ -663,7 +648,7 @@
                     this.onDocumentAutoSave(doc);
                 }, this.autoSaveDelay);
             },
-            onDocumentAutoSave:function(doc, force){
+            onDocumentAutoSave:function(doc, force, context, completeCallback){
                 if(!this.autoSave) {
                     console.log(this.toString(), "Autosave disabled, ignoring request");
                     return;
@@ -672,7 +657,7 @@
                     console.log(this.toString(), "document is new, waiting for upload to complete before saving.");
                     return;
                 }
-                this.saveDocument(doc);
+                this.saveDocument(doc, context, completeCallback);
             },
             saveDocuments:function(completeCallback){
                 var toSave = this._deletedDocuments.length;
@@ -708,12 +693,12 @@
             replaceDocument:function(index, doc){
                 this.documents[index] = doc;
             },
-            saveDocument:function(doc, completeCallback){
+            saveDocument:function(doc, context, completeCallback){
                 if(doc._dirty) {
                     var transactionType = doc.handle ? "create" : "update";
                     this.fireDataRequest({
                         type:"document/save", typePrefix:false,
-                        params:{document:doc},
+                        params:{document:doc, context:context},
                         success:function(response){
                             response.data.processing = doc.processing;
                             this.replaceDocument(this.documents.indexOf(doc), response.data);
@@ -726,17 +711,17 @@
                                     break;
                             }
                             this.fire("input", doc);
-                            completeCallback && completeCallback(response);
+                            completeCallback && completeCallback(true, response);
                         }.bind(this),
                         failure:function(response){
-                            completeCallback && completeCallback(response);
+                            completeCallback && completeCallback(false, response);
                         }.bind(this)
                     });
                 }else{
                     console.log(this.toString(), "document is unchanged, ignoring save request.");
                 }
             },
-            onContextChanged:function(){
+            onDataContextChanged:function(){
                 this.reload(); // todo inject conditions to reload on contextChangedPath
             },
             reload:function(){
