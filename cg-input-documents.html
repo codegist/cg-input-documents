@@ -447,7 +447,7 @@
                     this._dropzone.accept(file, function(error) {
                         this._dropzone.removeAllFiles();
                         this._onDocAdded(file, error ? error.replace("{{filename}}", file.name) : error);
-                        var uploadTask = CGUploadTaskFactory.task(this.uploadUrl, file, function(event, data, task, file){
+                        var uploadTask = CG.UploadTaskFactory.task(this.uploadUrl, file, function(event, data, task, file){
                             var doc = this._getDocByHandle(file);
                             if(!doc) return;
                             switch(event){
@@ -484,7 +484,7 @@
                                     break;
                             }
                         }.bind(this));
-                        var saveTask = new Task("Save document " + file.name, function(task, doc, context){
+                        var saveTask = new CG.Task("Save document " + file.name, function(task, doc, context){
                             task.progress(50);
                             this.onUploadCompleted(doc.model, task.dependsOn.info.data, context, function(success, response){
                                 if(success) {
