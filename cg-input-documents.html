@@ -476,7 +476,9 @@
                                         this._setDocumentProperty(doc.index, "processing.finished", true);
                                         this._setDocumentProperty(doc.index, "processing.success", false);
                                         this._setDocumentProperty(doc.index, "processing.canceled", true);
-                                    }else {
+                                    }else if(data.discarded) {
+                                        this._commitDeleteDoc(doc.model, false);
+                                    }else{
                                         console.log(this.toString(), "error" , doc.model.name);
                                         this._setDocumentProperty(doc.index, "processing.finished", true);
                                         this._setDocumentProperty(doc.index, "processing.success", false);
@@ -579,7 +581,7 @@
             _retryUpload:function(e){
                 var doc = this._getDocFromEvent(e);
                 this._setDocumentProperty(this.documents.indexOf(doc), "processing", null);
-                this._dropzone.processFile(doc.handle);
+                doc._tasks[0].retry();
             },
             startUpload:function() {
                 this._dropzone.processQueue();
@@ -703,6 +705,8 @@
             saveDocument:function(doc, context, completeCallback){
                 if(doc._dirty) {
                     var transactionType = doc.handle ? "create" : "update";
+                    var tasks = doc._tasks;
+                    delete doc._tasks;
                     this.fireDataRequest({
                         type:"document/save", typePrefix:false,
                         params:{document:doc, context:context},
@@ -721,6 +725,7 @@
                             completeCallback && completeCallback(true, response);
                         }.bind(this),
                         failure:function(response){
+                            doc._tasks = tasks;
                             completeCallback && completeCallback(false, response);
                         }.bind(this)
                     });
