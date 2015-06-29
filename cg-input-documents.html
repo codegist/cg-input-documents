@@ -447,6 +447,7 @@
                     this._dropzone.accept(file, function(error) {
                         this._dropzone.removeAllFiles();
                         this._onDocAdded(file, error ? error.replace("{{filename}}", file.name) : error);
+                        var doc = this._getDocByHandle(file);
                         var uploadTask = CG.UploadTaskFactory.task(this.uploadUrl, file, function(event, data, task, file){
                             var doc = this._getDocByHandle(file);
                             if(!doc) return;
@@ -486,15 +487,17 @@
                         }.bind(this));
                         var saveTask = new CG.Task("Save document " + file.name, function(task, doc, context){
                             task.progress(50);
-                            this.onUploadCompleted(doc.model, task.dependsOn.info.data, context, function(success, response){
+                            this.onUploadCompleted(doc, task.dependsOn.info.data, context, function(success, response){
                                 if(success) {
+                                    delete doc._tasks;
                                     task.success(response.data);
                                 }else{
                                     task.error(response.data);
                                 }
                             });
-                        }, [this._getDocByHandle(file), CG.Utils.Objects.clone(false, {}, this.dataContext)], this, function(){}, uploadTask);
-                        this.fireDocument("cg-tasks", "schedule-tasks", [uploadTask, saveTask]);
+                        }, [doc.model, CG.Utils.Objects.clone(false, {}, this.dataContext)], this, function(){}, uploadTask);
+                        doc.model._tasks = [uploadTask, saveTask];
+                        this.fireDocument("cg-tasks", "schedule-tasks", doc.model._tasks);
                     }.bind(this));
                 }.bind(this));
 
@@ -574,7 +577,6 @@
                 this.set("documents." + index + "." + prop, value)
             },
             _retryUpload:function(e){
-                this.cancelEvent(e);
                 var doc = this._getDocFromEvent(e);
                 this._setDocumentProperty(this.documents.indexOf(doc), "processing", null);
                 this._dropzone.processFile(doc.handle);
@@ -594,12 +596,17 @@
                 return e.model.item;
             },
             _onDeleteDocument:function(e){
-                this.cancelEvent(e);
                 this.deleteDocument(this._getDocFromEvent(e), this.autoSave);
             },
             deleteDocument:function(doc, force, completeCallback){
                 this.cancelScheduledSave(doc);
-                if(force && this.isDataAware()) {
+                var tasks = doc._tasks;
+                if(tasks) {
+                    tasks.forEach(function(t){
+                        t.cancel(true); // TODO hmm...
+                    });
+                    this._commitDeleteDoc(doc);
+                }else if(force && this.isDataAware()) {
                     this.fireDataRequest({
                         type:"document/delete", typePrefix:false,
                         params:{document:doc},
