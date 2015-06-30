@@ -489,12 +489,12 @@
                         }.bind(this));
                         var saveTask = new CG.Task("Save document " + file.name, function(task, doc, context){
                             task.progress(50);
-                            this.onUploadCompleted(doc, task.dependsOn.info.data, context, function(success, response){
+                            this.onUploadCompleted(doc, task.dependsOn.data, context, function(success, response){
                                 if(success) {
                                     delete doc._tasks;
                                     task.success(response.data);
                                 }else{
-                                    task.error(response.data);
+                                    task.fail(response.data);
                                 }
                             });
                         }, [doc.model, CG.Utils.Objects.clone(false, {}, this.dataContext)], this, function(){}, uploadTask);
@@ -605,7 +605,8 @@
                 var tasks = doc._tasks;
                 if(tasks) {
                     tasks.forEach(function(t){
-                        t.cancel(true); // TODO hmm...
+                        t.cancel();
+                        t.discard();
                     });
                     this._commitDeleteDoc(doc);
                 }else if(force && this.isDataAware()) {
