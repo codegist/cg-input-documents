@@ -707,11 +707,14 @@
                 if(doc._dirty) {
                     var transactionType = doc.handle ? "create" : "update";
                     var tasks = doc._tasks;
+                    var handle = doc.handle;
                     delete doc._tasks;
+                    delete doc.handle;
                     this.fireDataRequest({
                         type:"document/save", typePrefix:false,
                         params:{document:doc, context:context},
                         success:function(response){
+                            doc.handle = handle;
                             response.data.processing = doc.processing;
                             this.replaceDocument(this.documents.indexOf(doc), response.data);
                             switch(transactionType) {
@@ -727,6 +730,7 @@
                         }.bind(this),
                         failure:function(response){
                             doc._tasks = tasks;
+                            doc.handle = handle;
                             completeCallback && completeCallback(false, response);
                         }.bind(this)
                     });
